@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-stone-50 text-[17px] leading-relaxed text-stone-700 antialiased md:text-lg;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply font-extrabold tracking-tight text-navy-900;
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-bni-600 ring-offset-2 ring-offset-stone-50;
+  }
+
+  ::selection {
+    @apply bg-bni-100 text-bni-900;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  .container-page {
+    @apply mx-auto w-full max-w-6xl px-5 sm:px-8;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .reveal {
+    opacity: 0;
+    transform: translateY(16px);
+    animation: reveal-in 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .reveal-d1 {
+    animation-delay: 70ms;
+  }
+
+  .reveal-d2 {
+    animation-delay: 140ms;
+  }
+
+  .reveal-d3 {
+    animation-delay: 210ms;
+  }
+}
+
+@keyframes reveal-in {
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
