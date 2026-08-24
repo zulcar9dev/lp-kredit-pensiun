@@ -4,6 +4,7 @@ import { FloatingWhatsApp } from "@/components/floating-whatsapp";
 import { Advantages } from "@/components/advantages";
 import { BankPartners } from "@/components/bank-partners";
 import { HowItWorks } from "@/components/how-it-works";
+import { SimulationTeaser } from "@/components/simulation-teaser";
 import { Testimonials } from "@/components/testimonials";
 import { LeadFormSection } from "@/components/lead-form-section";
 import { Faq } from "@/components/faq";
@@ -60,6 +61,7 @@ export default function Home() {
         <Advantages />
         <BankPartners />
         <HowItWorks />
+        <SimulationTeaser />
         <ScrollTracker />
         <Testimonials />
         <LeadFormSection />

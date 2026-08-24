@@ -8,6 +8,30 @@ export function buildWaLink(options?: { message?: string }): string {
   return `https://wa.me/${settings.waNumberIntl}?text=${encodeURIComponent(text)}`;
 }
 
+export function buildWaSimulationMessage(data: {
+  categoryLabel: string;
+  income: number;
+  tenorMonths: number;
+  plafonMaks: number;
+  angsuran: number;
+}): string {
+  const years = Math.floor(data.tenorMonths / 12);
+  const months = data.tenorMonths % 12;
+  const tenorText = months > 0 ? `${years} tahun ${months} bulan` : `${years} tahun`;
+  return [
+    "Halo, saya baru mencoba fitur simulasi kredit pensiun di website.",
+    "",
+    "Hasil simulasinya:",
+    `Status: ${data.categoryLabel}`,
+    `Pendapatan per bulan: ${formatRupiah(data.income)}`,
+    `Tenor dipilih: ${tenorText}`,
+    `Estimasi plafon maksimal: ${formatRupiah(data.plafonMaks)}`,
+    `Estimasi angsuran per bulan: ${formatRupiah(data.angsuran)}`,
+    "",
+    "Mohon dibantu jelaskan lebih detail ya. Terima kasih.",
+  ].join("\n");
+}
+
 export function buildWaLeadMessage(data: {
   name: string;
   pensionType: PensionType | "";

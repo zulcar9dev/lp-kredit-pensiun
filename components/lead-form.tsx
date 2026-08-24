@@ -19,7 +19,7 @@ import {
 import { PROVINCES } from "@/lib/provinces";
 import { getActiveBankProducts } from "@/lib/bank-products";
 import { leadSchema, type LeadData, type LeadInput } from "@/lib/schema";
-import { clearLeadDraft, readLeadDraft } from "@/lib/draft";
+import { clearLeadDraft, readLeadDraft, takeLeadDraftLoanAmount } from "@/lib/draft";
 import { readStoredUtm } from "@/lib/utm";
 import { submitLead } from "@/lib/submit-lead";
 import { formatRupiahShort } from "@/lib/format";
@@ -66,11 +66,12 @@ export function LeadForm() {
 
   useEffect(() => {
     const draft = readLeadDraft();
-    if (draft.name || draft.whatsapp) {
+    const simLoanAmount = takeLeadDraftLoanAmount();
+    if (draft.name || draft.whatsapp || simLoanAmount !== undefined) {
       reset({
         name: draft.name ?? "",
         whatsapp: draft.whatsapp ?? "",
-        loanAmount: LOAN_DEFAULT,
+        loanAmount: simLoanAmount ?? LOAN_DEFAULT,
         interestedBank: BANK_DEFAULT_OPTION,
       });
     }
