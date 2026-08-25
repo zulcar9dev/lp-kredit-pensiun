@@ -11,7 +11,7 @@ export async function submitLead(payload: LeadPayload): Promise<SubmitResult> {
   if (!payload.name || !payload.whatsapp) {
     return {
       ok: false,
-      message: "Data belum lengkap. Mohon periksa kembali formulir Anda.",
+      message: "Datanya belum lengkap. Mohon periksa lagi formulirnya.",
     };
   }
 

@@ -15,11 +15,12 @@ export function SimulationTeaser() {
             </span>
             <div>
               <h2 id="simulasi-teaser-title" className="text-2xl tracking-tight sm:text-3xl">
-                Mau tahu perkiraan plafon dan cicilannya?
+                Mau hitungan yang lebih rinci?
               </h2>
               <p className="mt-2 max-w-[52ch] text-stone-700">
-                Coba simulasi singkat: masukkan pendapatan pensiun, hasilnya
-                langsung terlihat. Tanpa daftar dan tanpa data pribadi.
+                Di halaman simulasi, Bapak/Ibu bisa atur sendiri lama
+                pinjamannya, lengkap dengan rincian biaya dan perkiraan dana
+                bersih yang diterima.
               </p>
             </div>
           </div>
@@ -27,7 +28,7 @@ export function SimulationTeaser() {
             href="/simulasi"
             className="inline-flex min-h-[56px] shrink-0 items-center justify-center gap-2 rounded-xl bg-bni-600 px-7 text-lg font-bold text-white shadow-card transition-colors hover:bg-bni-700 active:scale-[0.99]"
           >
-            <span>Coba Simulasi</span>
+            <span>Buka Simulasi Lengkap</span>
             <ArrowRight weight="bold" className="size-5" aria-hidden="true" />
           </Link>
         </div>

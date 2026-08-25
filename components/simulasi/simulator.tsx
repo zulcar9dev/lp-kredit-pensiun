@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
+  ArrowLeft,
   ArrowRight,
   Calculator,
   Warning,
@@ -137,12 +138,19 @@ export function Simulator() {
 
   return (
     <section aria-labelledby="simulasi-title" className="container-page pb-16 pt-10 md:pb-24 md:pt-14">
-      <h1 id="simulasi-title" className="max-w-[30ch] text-3xl tracking-tight sm:text-4xl">
-        Hitung estimasi plafon dan cicilan kredit pensiun.
+      <Link
+        href="/"
+        className="inline-flex items-center gap-1.5 text-sm font-semibold text-stone-600 transition-colors hover:text-bni-700"
+      >
+        <ArrowLeft weight="bold" className="size-4" aria-hidden="true" />
+        Kembali ke halaman utama
+      </Link>
+      <h1 id="simulasi-title" className="mt-4 max-w-[30ch] text-3xl tracking-tight sm:text-4xl">
+        Hitung sendiri estimasi plafon dan cicilan kredit pensiun.
       </h1>
       <p className="mt-4 max-w-[56ch] text-stone-700">
-        Isi tiga data saja, hasilnya langsung muncul. Tanpa daftar akun dan
-        tanpa mengisi data pribadi.
+        Isi tiga data saja, hasilnya langsung muncul. Tidak perlu bikin akun,
+        tidak perlu data pribadi.
       </p>
 
       <div className="mt-10 grid items-start gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
@@ -168,7 +176,7 @@ export function Simulator() {
             </div>
             <p className="mt-2 text-sm text-stone-600">
               {category === "pra_purna"
-                ? "Untuk yang masih bekerja dan punya rencana pensiun di kemudian hari."
+                ? "Untuk yang masih bekerja, tapi sudah merencanakan pensiun."
                 : "Untuk yang sudah menerima dana pensiun."}
             </p>
           </fieldset>
@@ -296,7 +304,7 @@ export function Simulator() {
                 role="status"
                 className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-800"
               >
-                Batas usia pembiayaan sudah tercapai, sehingga tidak ada tenor
+                Batas usia pembiayaan sudah tercapai, jadi tidak ada tenor
                 yang tersedia.
               </div>
             )
@@ -313,15 +321,15 @@ export function Simulator() {
                   aria-hidden="true"
                 />
                 <p className="mt-4 font-bold text-navy-900">
-                  Hasil simulasi akan muncul di sini.
+                  Hasilnya akan muncul di sini.
                 </p>
                 {missingItems.length > 0 && (
                   <p className="mx-auto mt-2 max-w-[40ch] text-stone-700">
-                    Lengkapi dulu{" "}
+                    Isi dulu{" "}
                     <span className="font-bold text-bni-700">
                       {missingItems.join(" dan ")}
                     </span>{" "}
-                    di panel sebelah.
+                    di panel sebelah, hasilnya langsung keluar.
                   </p>
                 )}
               </div>
@@ -428,8 +436,9 @@ export function Simulator() {
                       aria-hidden="true"
                     />
                     <p className="text-amber-800">
-                      Estimasi plafon di bawah batas minimum umum Rp 10 juta.
-                      Coba naikkan tenor atau sesuaikan pendapatan.
+                      Estimasi plafonnya masih di bawah batas minimum umum Rp
+                      10 juta. Coba perpanjang tenor atau sesuaikan
+                      pendapatannya.
                     </p>
                   </div>
                 )}

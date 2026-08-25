@@ -98,11 +98,11 @@ export function BankPartners() {
     <section id="bank-mitra" className="bg-white">
       <div className="container-page py-16 md:py-24">
         <h2 className="max-w-[26ch] text-3xl tracking-tight sm:text-4xl">
-          Ada beberapa pilihan dari bank mitra kami.
+          Ini beberapa pilihan dari bank mitra kami.
         </h2>
         <p className="mt-4 max-w-[56ch] text-stone-700">
-          Angka di bawah masih indikatif. Angka final selalu diberitahu bank
-          saat konsultasi.
+          Angka di bawah masih indikatif, belum final. Angka pastinya baru
+          diberitahu bank saat konsultasi.
         </p>
 
         <div className="mt-10 flex snap-x snap-mandatory gap-5 overflow-x-auto pb-4 [scrollbar-width:thin]">

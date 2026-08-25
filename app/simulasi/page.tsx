@@ -7,7 +7,7 @@ import { Simulator } from "@/components/simulasi/simulator";
 export const metadata: Metadata = {
   title: "Simulasi Kredit Pensiun",
   description:
-    "Hitung estimasi plafon dan angsuran kredit pensiun hanya dengan pendapatan dan tanggal lahir. Hasil langsung muncul, gratis dan tanpa data pribadi.",
+    "Hitung sendiri estimasi plafon dan angsuran kredit pensiun, cukup dengan pendapatan dan tanggal lahir. Hasilnya langsung muncul, gratis dan tanpa data pribadi.",
   alternates: {
     canonical: "/simulasi",
   },

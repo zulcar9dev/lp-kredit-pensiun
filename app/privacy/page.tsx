@@ -17,30 +17,33 @@ export default function PrivacyPage() {
             Data yang kami kumpulkan
           </h2>
           <p className="mt-2">
-            Melalui formulir pengajuan di halaman ini, kami mengumpulkan: nama
-            lengkap, nomor WhatsApp, jenis pensiun, provinsi, perkiraan nominal
-            pinjaman yang dibutuhkan, dan bank pilihan (jika diisi).
+            Kalau Bapak/Ibu mengisi formulir pengajuan, data yang kami terima
+            adalah: nama lengkap, nomor WhatsApp, jenis pensiun, provinsi,
+            perkiraan nominal pinjaman yang dibutuhkan, dan bank pilihan
+            (kalau diisi).
           </p>
         </section>
 
         <section>
           <h2 className="text-xl tracking-tight text-navy-900">
-            Penggunaan data
+            Datanya dipakai untuk apa
           </h2>
           <p className="mt-2">
-            Data Anda hanya digunakan untuk mencarikan produk kredit pensiun
-            dari bank mitra yang cocok dan menghubungi Anda untuk konsultasi.
-            Kami tidak menjual atau membagikan data Anda kepada pihak lain di
-            luar keperluan tersebut. Data produk mungkin diteruskan ke bank
-            mitra pilihan Anda sebatas keperluan pengajuan.
+            Data Bapak/Ibu hanya dipakai untuk dua hal: mencarikan produk
+            kredit pensiun yang cocok dari bank mitra, dan menghubungi
+            Bapak/Ibu untuk konsultasi. Kami tidak menjual atau menyebarkan
+            data ke pihak lain di luar itu. Sebatas keperluan pengajuan, data
+            produk boleh diteruskan ke bank mitra pilihan Bapak/Ibu.
           </p>
         </section>
 
         <section>
-          <h2 className="text-xl tracking-tight text-navy-900">Hak Anda</h2>
+          <h2 className="text-xl tracking-tight text-navy-900">
+            Hak Bapak/Ibu
+          </h2>
           <p className="mt-2">
-            Anda berhak meminta penghapusan data yang Anda kirimkan. Silakan
-            hubungi kami melalui nomor WhatsApp yang tertera di{" "}
+            Bapak/Ibu berhak meminta datanya dihapus kapan saja. Caranya
+            mudah, hubungi saja nomor WhatsApp yang tertera di{" "}
             <Link
               href="/"
               className="font-semibold text-bni-700 underline decoration-bni-300 decoration-2 underline-offset-4"

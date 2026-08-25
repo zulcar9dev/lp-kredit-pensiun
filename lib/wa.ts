@@ -19,7 +19,7 @@ export function buildWaSimulationMessage(data: {
   const months = data.tenorMonths % 12;
   const tenorText = months > 0 ? `${years} tahun ${months} bulan` : `${years} tahun`;
   return [
-    "Halo, saya baru mencoba fitur simulasi kredit pensiun di website.",
+    "Halo, saya barusan mencoba simulasi kredit pensiun di website.",
     "",
     "Hasil simulasinya:",
     `Status: ${data.categoryLabel}`,
@@ -40,9 +40,9 @@ export function buildWaLeadMessage(data: {
 }): string {
   const nominal = data.loanAmount ? formatRupiah(data.loanAmount) : "-";
   return [
-    `Halo, saya ${data.name} tadi sudah mengisi formulir di website.`,
+    `Halo, saya ${data.name} barusan mengisi formulir di website.`,
     "",
-    "Mohon dicek ya, saya ingin dibantu carikan produk kredit pensiun yang cocok.",
+    "Mohon dicek ya, saya minta dibantu carikan produk kredit pensiun yang cocok.",
     "",
     `Jenis pensiun: ${data.pensionType || "-"}`,
     `Provinsi: ${data.province || "-"}`,

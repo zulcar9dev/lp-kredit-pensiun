@@ -15,10 +15,10 @@ export function HowItWorks() {
     <section id="cara-pengajuan" className="bg-stone-50">
       <div className="container-page py-16 md:py-24">
         <h2 className="max-w-[26ch] text-3xl tracking-tight sm:text-4xl">
-          Cara pengajuannya mudah, hanya tiga langkah.
+          Cara pengajuannya gampang, cuma tiga langkah.
         </h2>
         <p className="mt-4 max-w-[56ch] text-stone-700">
-          Bapak/Ibu tidak perlu repot datang ke mana-mana untuk memulai.
+          Untuk memulai, Bapak/Ibu tidak perlu ke mana-mana.
         </p>
 
         <ol className="mt-12 grid items-stretch gap-4 md:grid-cols-[1fr_auto_1fr_auto_1fr] md:gap-3">
@@ -61,8 +61,8 @@ export function HowItWorks() {
         </ol>
 
         <p className="mt-8 max-w-[56ch] text-sm text-stone-600">
-          Estimasi waktu proses dan persyaratan lengkap dijelaskan saat
-          konsultasi, sesuai kondisi dana pensiun dan produk bank mitra
+          Soal lama proses dan persyaratan lengkap, semuanya dijelaskan saat
+          konsultasi sesuai kondisi dana pensiun dan produk bank mitra
           Bapak/Ibu.
         </p>
       </div>

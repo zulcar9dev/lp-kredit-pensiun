@@ -213,7 +213,7 @@ export function simulate(input: SimulationInput): SimulationResult {
 
   if (plafonMaks <= 0) {
     return ineligible(
-      "Kapasitas pendapatan belum cukup untuk mengajukan pinjaman.",
+      "Dengan pendapatan yang diisi ini, kapasitasnya belum cukup untuk mengajukan pinjaman.",
       usiaYears,
       usiaMonths,
       maxTenorMonths,

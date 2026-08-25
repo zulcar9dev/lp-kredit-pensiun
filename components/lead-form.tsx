@@ -44,6 +44,7 @@ export function LeadForm() {
   );
   const [serverError, setServerError] = useState<string | null>(null);
   const [waMessage, setWaMessage] = useState<string | null>(null);
+  const [carriedFromEstimate, setCarriedFromEstimate] = useState(false);
 
   const {
     register,
@@ -74,6 +75,9 @@ export function LeadForm() {
         loanAmount: simLoanAmount ?? LOAN_DEFAULT,
         interestedBank: BANK_DEFAULT_OPTION,
       });
+    }
+    if (simLoanAmount !== undefined) {
+      setCarriedFromEstimate(true);
     }
   }, [reset]);
 
@@ -116,11 +120,11 @@ export function LeadForm() {
           aria-hidden="true"
         />
         <h3 className="mt-4 text-2xl tracking-tight text-navy-900">
-          Terima kasih, datanya sudah kami terima.
+          Terima kasih, datanya sudah masuk.
         </h3>
         <p className="mt-2 max-w-[52ch] text-stone-700">
-          Saya akan hubungi lewat WhatsApp untuk lanjut carikan produk yang
-          paling cocok. Mau lebih cepat? Chat saja sekarang.
+          Nanti saya hubungi lewat WhatsApp untuk carikan produk yang paling
+          cocok. Mau lebih cepat? Chat saja sekarang.
         </p>
         <div className="mt-5 flex flex-wrap gap-3">
           <WaButton size="lg" message={waMessage ?? undefined} />
@@ -301,6 +305,22 @@ export function LeadForm() {
           <span>Rp 10 juta</span>
           <span>Rp 500 juta</span>
         </div>
+        {carriedFromEstimate && (
+          <p
+            role="status"
+            className="mt-3 flex items-center gap-2 rounded-xl border border-bni-200 bg-bni-50 px-4 py-3 text-sm font-semibold text-navy-900"
+          >
+            <CheckCircle
+              weight="fill"
+              className="size-5 shrink-0 text-bni-600"
+              aria-hidden="true"
+            />
+            <span>
+              Nominalnya mengikuti estimasi plafon Bapak/Ibu. Silakan ubah
+              kalau perlu.
+            </span>
+          </p>
+        )}
       </div>
 
       {serverError && (
@@ -332,9 +352,9 @@ export function LeadForm() {
       </button>
 
       <p className="text-sm leading-relaxed text-stone-600">
-        Dengan mengirim formulir, Anda setuju dihubungi oleh tim kami. Data
-        hanya dipakai untuk mencarikan produk kredit pensiun yang cocok dan
-        tidak dibagikan sembarangan.
+        Dengan mengirim formulir ini, Bapak/Ibu setuju untuk dihubungi. Data
+        hanya dipakai mencarikan produk kredit pensiun yang cocok dan tidak
+        dibagikan sembarangan.
       </p>
     </form>
   );

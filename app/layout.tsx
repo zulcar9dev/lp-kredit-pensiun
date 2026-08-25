@@ -13,9 +13,9 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 const settings = getAppSettings();
-const pageTitle = `${settings.siteTitle} | Bantu Urus Pengajuan Sampai Cair`;
+const pageTitle = `${settings.siteTitle} | Tinggal Chat, Saya Urus Sampai Cair`;
 const pageDescription =
-  "Layanan pendampingan kredit pensiun untuk pensiunan TNI/Polri, PNS, BUMN, dan swasta. Gratis konsultasi via WhatsApp, ada pilihan produk dari beberapa bank mitra.";
+  "Pendampingan pengajuan kredit pensiun untuk pensiunan TNI/Polri, PNS, BUMN, dan swasta. Konsultasi gratis via WhatsApp, ada pilihan produk dari beberapa bank mitra.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: pageTitle,
     description:
-      "Gratis konsultasi via WhatsApp, ada pilihan produk dari beberapa bank mitra.",
+      "Konsultasi gratis via WhatsApp, ada pilihan produk dari beberapa bank mitra.",
   },
   robots: {
     index: true,

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { HandCoins } from "@phosphor-icons/react/dist/ssr";
 import { WaButton } from "@/components/wa-button";
 import { getAppSettings } from "@/lib/settings";
@@ -6,10 +7,10 @@ export function SiteHeader() {
   return (
     <header className="border-b border-stone-200 bg-stone-50">
       <div className="container-page flex h-[72px] items-center justify-between gap-4">
-        <a
-          href="#top"
+        <Link
+          href="/"
           className="flex min-w-0 items-center gap-3"
-          aria-label={`${getAppSettings().siteTitle}, kembali ke bagian atas`}
+          aria-label={`${getAppSettings().siteTitle}, kembali ke halaman utama`}
         >
           <span
             aria-hidden="true"
@@ -20,7 +21,7 @@ export function SiteHeader() {
           <span className="truncate text-lg font-extrabold tracking-tight text-navy-900">
             {getAppSettings().siteTitle}
           </span>
-        </a>
+        </Link>
         <WaButton />
       </div>
     </header>

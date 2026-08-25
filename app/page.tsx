@@ -23,9 +23,9 @@ function StructuredData() {
         "@type": "WebPage",
         "@id": `${SITE_URL}/#webpage`,
         url: `${SITE_URL}/`,
-        name: `${settings.siteTitle} | Bantu Urus Pengajuan Kredit Pensiun Sampai Cair`,
+        name: `${settings.siteTitle} | Tinggal Chat, Saya Urus Sampai Cair`,
         description:
-          "Layanan pendampingan pengajuan kredit pensiun dari beberapa bank mitra untuk pensiunan TNI/Polri, PNS, BUMN, dan swasta.",
+          "Pendampingan pengajuan kredit pensiun dari beberapa bank mitra untuk pensiunan TNI/Polri, PNS, BUMN, dan swasta.",
         inLanguage: "id-ID",
       },
       {

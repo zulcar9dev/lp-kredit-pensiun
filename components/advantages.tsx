@@ -40,7 +40,7 @@ export function Advantages() {
           Kenapa mengurus lewat kami?
         </h2>
         <p className="mt-4 max-w-[56ch] text-stone-700">
-          Empat hal yang membuat Bapak/Ibu lebih tenang bersama kami.
+          Empat alasan kenapa Bapak/Ibu bisa lebih tenang selama prosesnya.
         </p>
 
         <div className="mt-10 grid gap-5 md:grid-cols-2 md:gap-6">

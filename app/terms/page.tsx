@@ -34,11 +34,10 @@ export default function TermsPage() {
             Proses pengajuan
           </h2>
           <p className="mt-2">
-            Pengajuan dimulai dengan konsultasi bersama kami. Produk berasal
-            dari bank mitra, sehingga keputusan persetujuan kredit, besar
-            bunga, dan jangka waktu mengikuti syarat resmi bank terkait yang
-            akan dijelaskan kepada Anda secara lengkap sebelum tanda tangan
-            dokumen apa pun.
+            Pengajuan dimulai dari konsultasi bersama kami. Produknya milik
+            bank mitra, jadi soal persetujuan kredit, besar bunga, dan jangka
+            waktu mengikuti syarat resmi bank terkait. Semuanya dijelaskan
+            lengkap sebelum ada dokumen yang ditandatangani.
           </p>
         </section>
 
@@ -47,8 +46,9 @@ export default function TermsPage() {
             Tanpa kewajiban
           </h2>
           <p className="mt-2">
-            Mengisi formulir atau melakukan konsultasi tidak mewajibkan Anda
-            mengambil produk. Anda bebas memutuskan setelah menerima penjelasan.
+            Mengisi formulir atau ikut konsultasi tidak membuat Bapak/Ibu
+            wajib mengambil produk. Putusan tetap di tangan Bapak/Ibu setelah
+            menerima penjelasan.
           </p>
         </section>
       </div>

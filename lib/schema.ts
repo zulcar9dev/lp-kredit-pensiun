@@ -6,37 +6,30 @@ const PHONE_REGEX = /^(?:\+62|62|0)8\d{7,12}$/;
 export const nameField = z
   .string()
   .trim()
-  .min(3, "Mohon isi nama lengkap Anda, minimal 3 huruf.")
-  .max(100, "Nama terlalu panjang.");
+  .min(3, "Mohon isi nama lengkapnya, minimal 3 huruf.")
+  .max(100, "Namanya terlalu panjang.");
 
 export const whatsappField = z
   .string()
   .trim()
   .transform((v) => v.replace(/[\s\-().]/g, ""))
   .refine((v) => PHONE_REGEX.test(v), {
-    message: "Gunakan nomor Indonesia, contoh: 081234567890",
+    message: "Nomornya pakai format Indonesia ya, contoh: 081234567890",
   });
 
 export const leadSchema = z.object({
   name: nameField,
   whatsapp: whatsappField,
   pensionType: z.enum(PENSION_TYPES, {
-    message: "Mohon pilih jenis pensiun Anda.",
+    message: "Mohon pilih jenis pensiunnya dulu.",
   }),
-  province: z.string().min(1, "Mohon pilih provinsi Anda."),
+  province: z.string().min(1, "Mohon pilih provinsinya dulu."),
   loanAmount: z.number().int().min(0).optional(),
   interestedBank: z.string().trim().max(120).optional(),
 });
 
-export const miniLeadSchema = z.object({
-  name: nameField,
-  whatsapp: whatsappField,
-});
-
 export type LeadInput = z.input<typeof leadSchema>;
 export type LeadData = z.output<typeof leadSchema>;
-export type MiniLeadInput = z.input<typeof miniLeadSchema>;
-export type MiniLeadData = z.output<typeof miniLeadSchema>;
 
 export interface LeadPayload extends LeadData {
   interested_bank?: string;

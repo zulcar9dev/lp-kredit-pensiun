@@ -1,14 +1,15 @@
+import Link from "next/link";
 import { HandCoins, Info, WhatsappLogo } from "@phosphor-icons/react/dist/ssr";
 import { CTA_LABEL, LEGAL } from "@/lib/constants";
 import { getAppSettings } from "@/lib/settings";
 import { WaButton } from "@/components/wa-button";
 
 const NAV_LINKS = [
-  { href: "#keunggulan", label: "Keunggulan" },
-  { href: "#bank-mitra", label: "Bank Mitra" },
-  { href: "#cara-pengajuan", label: "Cara Pengajuan" },
-  { href: "#ajukan", label: "Ajukan Sekarang" },
-  { href: "#faq", label: "Tanya Jawab" },
+  { href: "/#keunggulan", label: "Keunggulan" },
+  { href: "/#bank-mitra", label: "Bank Mitra" },
+  { href: "/#cara-pengajuan", label: "Cara Pengajuan" },
+  { href: "/#ajukan", label: "Ajukan Sekarang" },
+  { href: "/#faq", label: "Tanya Jawab" },
 ];
 
 export function SiteFooter() {
@@ -31,9 +32,9 @@ export function SiteFooter() {
               </span>
             </div>
             <p className="mt-4 max-w-[46ch] text-stone-700">
-              Jasa pendampingan pengajuan kredit pensiun untuk pensiunan
-              TNI/Polri, PNS, BUMN, dan swasta di seluruh Indonesia. Dikelola
-              tim kecil yang siap membantu Bapak/Ibu dari awal sampai cair.
+              Membantu pengurusan kredit pensiun untuk pensiunan TNI/Polri,
+              PNS, BUMN, dan swasta di seluruh Indonesia. Dikelola tim kecil
+              yang mendampingi langsung, dari chat pertama sampai dana cair.
             </p>
           </div>
 
@@ -44,12 +45,12 @@ export function SiteFooter() {
             <ul className="mt-4 space-y-2.5">
               {NAV_LINKS.map((link) => (
                 <li key={link.href}>
-                  <a
+                  <Link
                     href={link.href}
                     className="font-medium text-stone-700 transition-colors hover:text-bni-700"
                   >
                     {link.label}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>

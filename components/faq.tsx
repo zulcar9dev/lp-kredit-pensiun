@@ -28,12 +28,12 @@ export function Faq() {
         </div>
 
         <p className="mt-8 text-stone-700">
-          Masih ada pertanyaan lain?{" "}
+          Masih ada yang ingin ditanyakan?{" "}
           <a
             href="#ajukan"
             className="font-semibold text-bni-700 underline decoration-bni-300 decoration-2 underline-offset-4 transition-colors hover:text-bni-800"
           >
-            Hubungi kami di sini.
+            Sampaikan saja lewat sini.
           </a>
         </p>
       </div>
