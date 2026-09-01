@@ -1,4 +1,3 @@
-import { HeroEstimator } from "@/components/hero-estimator";
 import { WaButton } from "@/components/wa-button";
 import { TelLink } from "@/components/tel-link";
 
@@ -30,13 +29,13 @@ export function Hero() {
         <div className="reveal reveal-d1">
           <div className="rounded-xl border border-stone-200 bg-white p-6 shadow-card-lg md:p-8">
             <h2 className="text-2xl tracking-tight">
-              Hitung sendiri plafon Bapak/Ibu
+              Siap membantu Bapak/Ibu
             </h2>
             <p className="mb-6 mt-2 text-stone-600">
-              Geser angka pendapatan, isi tanggal lahir, hasilnya langsung
-              keluar. Tanpa data pribadi.
+              Konsultasi gratis, tanpa komitmen. Cukup chat WhatsApp, saya
+              bantu urus dari awal sampai cair.
             </p>
-            <HeroEstimator />
+            <WaButton size="lg" className="w-full" />
           </div>
         </div>
       </div>

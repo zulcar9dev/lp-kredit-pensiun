@@ -40,3 +40,18 @@ skills-lock.json
 opencode.json
 .agents/
 .claude/
+
+# InsForge & AI agent skills
+.insforge
+.agent
+.agents
+.augment
+.claude
+.cline
+.github/copilot*
+.kilocode
+.qoder
+.qwen
+.roo
+.trae
+.windsurf
