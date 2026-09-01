@@ -2,7 +2,7 @@ export const SITE_NAME = "Kredit Pensiun";
 
 export const CTA_LABEL = "Konsultasi via WhatsApp";
 
-export const WA_NUMBER_INTL = "628189902246";
+export const WA_NUMBER_INTL = "6282189902246";
 export const WA_NUMBER_DISPLAY = "0821-8990-2246";
 export const WA_PREFILLED_MESSAGE =
   "Halo, saya mau tanya-tanya soal kredit pensiun. Boleh dibantu infonya?";
