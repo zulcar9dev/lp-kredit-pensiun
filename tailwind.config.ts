@@ -9,7 +9,7 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        bni: {
+        brand: {
           50: "#FFF6EF",
           100: "#FFE9D9",
           200: "#FFD0B0",

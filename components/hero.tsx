@@ -13,7 +13,7 @@ export async function Hero() {
         <div className="reveal">
           <h1 className="max-w-[20ch] text-4xl leading-[1.1] tracking-tight sm:text-5xl">
             Sudah pensiun dan masih ada rencana?{" "}
-            <span className="text-bni-700">
+            <span className="text-brand-700">
               Tinggal chat, saya urus sampai cair.
             </span>
           </h1>
@@ -26,7 +26,7 @@ export async function Hero() {
             <WaButton waLink={waLink} size="lg" className="w-full sm:w-auto" />
             <a
               href="#ajukan"
-              className="inline-flex min-h-[56px] items-center justify-center rounded-xl border-2 border-navy-200 px-7 text-lg font-semibold text-navy-800 transition-colors hover:border-bni-400 hover:text-bni-700 active:scale-[0.99]"
+              className="inline-flex min-h-[56px] items-center justify-center rounded-xl border-2 border-navy-200 px-7 text-lg font-semibold text-navy-800 transition-colors hover:border-brand-400 hover:text-brand-700 active:scale-[0.99]"
             >
               Ajukan Sekarang
             </a>

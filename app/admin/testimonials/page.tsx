@@ -231,7 +231,7 @@ export default function AdminTestimonialsPage() {
                             style={{ width: 32, height: 32, borderRadius: 9999, objectFit: "cover", border: "1px solid var(--border)" }}
                           />
                         ) : (
-                          <div style={{ width: 32, height: 32, borderRadius: 9999, background: "var(--bni-100)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "var(--bni-700)" }}>
+                          <div style={{ width: 32, height: 32, borderRadius: 9999, background: "var(--brand-100)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "var(--brand-700)" }}>
                             {item.name.charAt(0).toUpperCase()}
                           </div>
                         )}

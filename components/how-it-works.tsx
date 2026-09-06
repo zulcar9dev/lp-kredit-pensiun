@@ -34,7 +34,7 @@ export function HowItWorks() {
                     return <Icon weight="duotone" className="size-7" />;
                   })()}
                 </span>
-                <h3 className="text-lg font-extrabold tracking-tight text-bni-700">
+                <h3 className="text-lg font-extrabold tracking-tight text-brand-700">
                   {step.label}
                 </h3>
                 <p className="mt-1.5 text-lg font-bold text-navy-900">
@@ -52,7 +52,7 @@ export function HowItWorks() {
                 >
                   <ArrowRight
                     weight="bold"
-                    className="size-6 rotate-90 text-bni-400 md:rotate-0"
+                    className="size-6 rotate-90 text-brand-400 md:rotate-0"
                   />
                 </div>
               )}

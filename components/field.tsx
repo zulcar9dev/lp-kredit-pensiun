@@ -3,7 +3,7 @@ import { WarningCircle } from "@phosphor-icons/react/dist/ssr";
 export const labelClass = "block text-sm font-bold text-navy-900";
 
 export const inputClass =
-  "min-h-[52px] w-full rounded-xl border border-stone-300 bg-white px-4 text-navy-900 placeholder:text-stone-500 transition-colors focus:border-bni-600 md:text-lg";
+  "min-h-[52px] w-full rounded-xl border border-stone-300 bg-white px-4 text-navy-900 placeholder:text-stone-500 transition-colors focus:border-brand-600 md:text-lg";
 
 export function FieldError({ message }: { message?: string }) {
   if (!message) return null;

@@ -18,7 +18,7 @@ function AdvantageIcon({ icon }: { icon: keyof typeof ICONS }) {
   return (
     <span
       aria-hidden="true"
-      className="mb-5 flex size-14 shrink-0 items-center justify-center rounded-xl border border-bni-100 bg-bni-50 text-bni-700"
+      className="mb-5 flex size-14 shrink-0 items-center justify-center rounded-xl border border-brand-100 bg-brand-50 text-brand-700"
     >
       <Icon weight="duotone" className="size-7" />
     </span>
@@ -37,7 +37,7 @@ export function Advantages() {
     <section id="keunggulan" className="bg-white">
       <div className="container-page py-16 md:py-24">
         <h2 className="max-w-[24ch] text-3xl tracking-tight sm:text-4xl">
-          Kenapa mengurus lewat kami?
+          Kenapa mengurus lewat saya?
         </h2>
         <p className="mt-4 max-w-[56ch] text-stone-700">
           Empat alasan kenapa Bapak/Ibu bisa lebih tenang selama prosesnya.
@@ -45,7 +45,7 @@ export function Advantages() {
 
         <div className="mt-10 grid gap-5 md:grid-cols-2 md:gap-6">
           <article
-            className={`${wideClass} border-bni-100 bg-gradient-to-br from-bni-50 to-stone-50`}
+            className={`${wideClass} border-brand-100 bg-gradient-to-br from-brand-50 to-stone-50`}
           >
             <AdvantageIcon icon={first.icon} />
             <div>

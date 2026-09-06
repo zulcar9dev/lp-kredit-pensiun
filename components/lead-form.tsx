@@ -285,7 +285,7 @@ export function LeadForm({ bankProducts = [], waLink, waNumberIntl }: { bankProd
           </label>
           <output
             htmlFor="lead-loan"
-            className="text-lg font-extrabold text-bni-700"
+            className="text-lg font-extrabold text-brand-700"
           >
             {formatRupiahShort(loanAmount)}
           </output>
@@ -304,7 +304,7 @@ export function LeadForm({ bankProducts = [], waLink, waNumberIntl }: { bankProd
               onChange={(event) => field.onChange(Number(event.target.value))}
               onBlur={field.onBlur}
               name={field.name}
-              className="mt-3 h-2 w-full cursor-pointer accent-bni-600"
+              className="mt-3 h-2 w-full cursor-pointer accent-brand-600"
             />
           )}
         />
@@ -315,11 +315,11 @@ export function LeadForm({ bankProducts = [], waLink, waNumberIntl }: { bankProd
         {carriedFromEstimate && (
           <p
             role="status"
-            className="mt-3 flex items-center gap-2 rounded-xl border border-bni-200 bg-bni-50 px-4 py-3 text-sm font-semibold text-navy-900"
+            className="mt-3 flex items-center gap-2 rounded-xl border border-brand-200 bg-brand-50 px-4 py-3 text-sm font-semibold text-navy-900"
           >
             <CheckCircle
               weight="fill"
-              className="size-5 shrink-0 text-bni-600"
+              className="size-5 shrink-0 text-brand-600"
               aria-hidden="true"
             />
             <span>
@@ -342,7 +342,7 @@ export function LeadForm({ bankProducts = [], waLink, waNumberIntl }: { bankProd
       <button
         type="submit"
         disabled={status === "submitting"}
-        className="inline-flex min-h-[56px] w-full items-center justify-center gap-2.5 rounded-xl bg-bni-600 px-7 text-lg font-bold text-white shadow-card transition-colors hover:bg-bni-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-70"
+        className="inline-flex min-h-[56px] w-full items-center justify-center gap-2.5 rounded-xl bg-brand-600 px-7 text-lg font-bold text-white shadow-card transition-colors hover:bg-brand-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-70"
       >
         {status === "submitting" ? (
           <>

@@ -14,7 +14,7 @@ export function Faq({ items }: { items: Faq[] }) {
         <div className="mt-10 divide-y divide-stone-200 border-y border-stone-200">
           {items.map((faq) => (
             <details key={faq.id} className="group">
-              <summary className="flex min-h-[64px] cursor-pointer list-none items-center justify-between gap-4 py-4 text-lg font-bold text-navy-900 transition-colors hover:text-bni-700 [&::-webkit-details-marker]:hidden">
+              <summary className="flex min-h-[64px] cursor-pointer list-none items-center justify-between gap-4 py-4 text-lg font-bold text-navy-900 transition-colors hover:text-brand-700 [&::-webkit-details-marker]:hidden">
                 <span>{faq.question}</span>
                 <CaretDown
                   weight="bold"
@@ -33,7 +33,7 @@ export function Faq({ items }: { items: Faq[] }) {
           Masih ada yang ingin ditanyakan?{" "}
           <a
             href="#ajukan"
-            className="font-semibold text-bni-700 underline decoration-bni-300 decoration-2 underline-offset-4 transition-colors hover:text-bni-800"
+            className="font-semibold text-brand-700 underline decoration-brand-300 decoration-2 underline-offset-4 transition-colors hover:text-brand-800"
           >
             Sampaikan saja lewat sini.
           </a>

@@ -5,7 +5,7 @@ function TestimonialCard({ item }: { item: Testimonial }) {
   return (
     <figure className="w-[85%] shrink-0 snap-start rounded-xl border border-stone-200 bg-white p-6 shadow-card sm:w-[55%] lg:w-[38%] md:p-8">
       <div
-        className="flex gap-1 text-bni-500"
+        className="flex gap-1 text-brand-500"
         role="img"
         aria-label={`Rating ${item.rating} dari 5`}
       >

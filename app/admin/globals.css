@@ -1,7 +1,7 @@
 /* ================================================
    ADMIN PANEL — Shared Styles (Next.js version)
    Tokens matched with LP: Plus Jakarta Sans,
-   navy-900, bni-600, stone-50, radius 12px
+   navy-900, brand-600, stone-50, radius 12px
    ================================================ */
 
 /* ---------- TOKENS ---------- */
@@ -33,13 +33,13 @@
   --navy-800: #102C4C;
   --navy-900: #0B2547;
 
-  --bni-50:  #FFF6EF;
-  --bni-100: #FFE9D9;
-  --bni-200: #FFD0B0;
-  --bni-400: #FF8C4A;
-  --bni-500: #F26F21;
-  --bni-600: #C8500F;
-  --bni-700: #A03E0A;
+  --brand-50:  #FFF6EF;
+  --brand-100: #FFE9D9;
+  --brand-200: #FFD0B0;
+  --brand-400: #FF8C4A;
+  --brand-500: #F26F21;
+  --brand-600: #C8500F;
+  --brand-700: #A03E0A;
 
   --wa: #25D366;
   --emerald-50: #ECFDF5;
@@ -61,8 +61,8 @@
   --text-heading:var(--navy-900);
   --text-muted: var(--stone-500);
   --border:     var(--stone-200);
-  --accent:     var(--bni-600);
-  --accent-hover:var(--bni-700);
+  --accent:     var(--brand-600);
+  --accent-hover:var(--brand-700);
 
   --sidebar-w: 248px;
   --topbar-h:  64px;
@@ -485,7 +485,7 @@ table { border-collapse: collapse; width: 100%; }
 }
 .badge-new       { background: var(--navy-50);   color: var(--navy-700); }
 .badge-contacted { background: var(--amber-50);  color: var(--amber-700); }
-.badge-processed { background: var(--bni-50);    color: var(--bni-700); }
+.badge-processed { background: var(--brand-50);    color: var(--brand-700); }
 .badge-closed    { background: var(--emerald-50);color: var(--emerald-600); }
 .badge-draft     { background: var(--stone-200); color: var(--stone-600); }
 .badge-published { background: var(--emerald-50);color: var(--emerald-600); }
@@ -644,7 +644,7 @@ table { border-collapse: collapse; width: 100%; }
   min-width: 32px;
   transition: width .3s;
 }
-.chart-bar-fill.bni  { background: var(--accent); }
+.chart-bar-fill.accent  { background: var(--accent); }
 .chart-bar-fill.wa   { background: var(--wa); }
 .chart-bar-count {
   font-size: var(--text-xs);

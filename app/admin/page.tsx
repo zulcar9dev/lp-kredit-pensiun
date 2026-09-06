@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { CircleNotch } from "@phosphor-icons/react/dist/ssr";
 import { fetchLeads, type LeadRow } from "@/lib/actions/leads";
+import { formatRupiah } from "@/lib/format";
 import {
   fetchBankProducts,
   type BankProductRow,
@@ -131,14 +132,6 @@ export default function AdminDashboardPage() {
     )
     .slice(0, 5);
 
-  function formatRupiah(n: number | null) {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-    }).format(n ?? 0);
-  }
-
   function formatDate(d: string) {
     return new Date(d).toLocaleDateString("id-ID", {
       day: "numeric",
@@ -203,7 +196,7 @@ export default function AdminDashboardPage() {
                 <div className="chart-bar-label">{province}</div>
                 <div className="chart-bar-track">
                   <div
-                    className="chart-bar-fill bni"
+                    className="chart-bar-fill accent"
                     style={{
                       width: `${(count / maxProvinceCount) * 100}%`,
                     }}
@@ -285,7 +278,7 @@ export default function AdminDashboardPage() {
                 <div className="chart-bar-label">{campaign}</div>
                 <div className="chart-bar-track">
                   <div
-                    className="chart-bar-fill bni"
+                    className="chart-bar-fill accent"
                     style={{
                       width: `${(count / maxCampaignCount) * 100}%`,
                     }}

@@ -55,7 +55,7 @@ export default function TermsPage() {
 
       <Link
         href="/"
-        className="mt-10 inline-flex min-h-[48px] items-center rounded-xl border-2 border-navy-200 px-5 font-semibold text-navy-800 transition-colors hover:border-bni-400 hover:text-bni-700"
+        className="mt-10 inline-flex min-h-[48px] items-center rounded-xl border-2 border-navy-200 px-5 font-semibold text-navy-800 transition-colors hover:border-brand-400 hover:text-brand-700"
       >
         Kembali ke halaman utama
       </Link>

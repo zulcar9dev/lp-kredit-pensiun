@@ -10,6 +10,7 @@ import { Faq } from "@/components/faq";
 import { SiteFooter } from "@/components/site-footer";
 import { ScrollTracker } from "@/components/scroll-tracker";
 import { UtmCapture } from "@/components/utm-capture";
+import { PixelScript } from "@/components/pixel-script";
 import { SITE_URL } from "@/lib/site";
 import { getAppSettings } from "@/lib/settings";
 import { fetchLandingData } from "@/lib/fetch-landing";
@@ -76,6 +77,7 @@ export default async function Home() {
       </main>
       <SiteFooter />
       <StructuredData faqs={faqs} />
+      <PixelScript />
     </>
   );
 }

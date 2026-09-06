@@ -25,7 +25,7 @@ export async function SiteFooter() {
             <div className="flex items-center gap-3">
               <span
                 aria-hidden="true"
-                className="flex size-11 items-center justify-center rounded-xl bg-bni-600 text-white"
+                className="flex size-11 items-center justify-center rounded-xl bg-brand-600 text-white"
               >
                 <HandCoins weight="duotone" className="size-6" />
               </span>
@@ -49,7 +49,7 @@ export async function SiteFooter() {
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="font-medium text-stone-700 transition-colors hover:text-bni-700"
+                    className="font-medium text-stone-700 transition-colors hover:text-brand-700"
                   >
                     {link.label}
                   </Link>
@@ -87,18 +87,18 @@ export async function SiteFooter() {
         <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-stone-300 pt-6 text-sm text-stone-600">
           <p>&copy; 2026 {settings.siteTitle}. Halaman informasi agen independen.</p>
           <div className="flex gap-6">
-            <a
+            <Link
               href="/privacy"
               className="font-medium underline decoration-stone-400 underline-offset-4 transition-colors hover:text-navy-900"
             >
               Kebijakan Privasi
-            </a>
-            <a
+            </Link>
+            <Link
               href="/terms"
               className="font-medium underline decoration-stone-400 underline-offset-4 transition-colors hover:text-navy-900"
             >
               Syarat &amp; Ketentuan
-            </a>
+            </Link>
           </div>
         </div>
       </div>

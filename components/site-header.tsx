@@ -18,7 +18,7 @@ export async function SiteHeader() {
         >
           <span
             aria-hidden="true"
-            className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-bni-600 text-white"
+            className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-brand-600 text-white"
           >
             <HandCoins weight="duotone" className="size-6" />
           </span>

@@ -15,7 +15,7 @@ export function TelLink({
   return (
     <a
       href={`tel:${tel}`}
-      className={`inline-flex items-center gap-2 font-semibold text-navy-800 underline decoration-bni-300 decoration-2 underline-offset-4 transition-colors hover:text-bni-700 ${className}`}
+      className={`inline-flex items-center gap-2 font-semibold text-navy-800 underline decoration-brand-300 decoration-2 underline-offset-4 transition-colors hover:text-brand-700 ${className}`}
     >
       <Phone weight="bold" className="size-5 shrink-0" aria-hidden="true" />
       <span>{display}</span>

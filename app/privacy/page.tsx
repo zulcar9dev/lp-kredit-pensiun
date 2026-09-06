@@ -46,7 +46,7 @@ export default function PrivacyPage() {
             mudah, hubungi saja nomor WhatsApp yang tertera di{" "}
             <Link
               href="/"
-              className="font-semibold text-bni-700 underline decoration-bni-300 decoration-2 underline-offset-4"
+              className="font-semibold text-brand-700 underline decoration-brand-300 decoration-2 underline-offset-4"
             >
               halaman utama
             </Link>
@@ -68,7 +68,7 @@ export default function PrivacyPage() {
 
       <Link
         href="/"
-        className="mt-10 inline-flex min-h-[48px] items-center rounded-xl border-2 border-navy-200 px-5 font-semibold text-navy-800 transition-colors hover:border-bni-400 hover:text-bni-700"
+        className="mt-10 inline-flex min-h-[48px] items-center rounded-xl border-2 border-navy-200 px-5 font-semibold text-navy-800 transition-colors hover:border-brand-400 hover:text-brand-700"
       >
         Kembali ke halaman utama
       </Link>

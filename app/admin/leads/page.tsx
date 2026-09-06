@@ -21,6 +21,7 @@ import {
   type LeadRow,
   type LeadFilters,
 } from "@/lib/actions/leads";
+import { formatRupiah } from "@/lib/format";
 import { PROVINCES } from "@/lib/provinces";
 import { PENSION_TYPES } from "@/lib/constants";
 
@@ -201,14 +202,6 @@ export default function AdminLeadsPage() {
     } else {
       alert("Gagal menghapus: " + result.error);
     }
-  }
-
-  function formatRupiah(n: number | null) {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-    }).format(n ?? 0);
   }
 
   function formatDate(d: string) {

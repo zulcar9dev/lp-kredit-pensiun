@@ -12,7 +12,7 @@ export async function LeadFormSection({ bankProducts }: { bankProducts: BankProd
   const waLink = buildWaLink(settings);
 
   return (
-    <section id="ajukan" className="scroll-mt-6 border-y border-bni-100 bg-bni-50">
+    <section id="ajukan" className="scroll-mt-6 border-y border-brand-100 bg-brand-50">
       <div className="container-page grid gap-10 py-16 md:py-24 lg:grid-cols-[1fr_520px] lg:gap-14">
         <div>
           <h2 className="max-w-[22ch] text-3xl tracking-tight sm:text-4xl">
@@ -33,7 +33,7 @@ export async function LeadFormSection({ bankProducts }: { bankProducts: BankProd
                 <Check
                   weight="bold"
                   aria-hidden="true"
-                  className="mt-1 size-5 shrink-0 text-bni-600"
+                  className="mt-1 size-5 shrink-0 text-brand-600"
                 />
                 <span>{point}</span>
               </li>

@@ -122,7 +122,7 @@ Contoh headline hero:
 | Jenis Pensiun     | Select   | Ya       | TNI/Polri, PNS, BUMN, Swasta    |
 | Provinsi          | Select   | Ya       | 38 provinsi Indonesia           |
 | Nominal Pinjaman  | Range    | Tidak    | Slider Rp 10jt - Rp 500jt       |
-| Bank Pilihan      | Select   | Tidak    | Dinamis dari daftar bank aktif di `bank_products` (opsi "Belum tahu, mohon direkomendasikan" sebagai default) |
+| Bank Pilihan      | Select   | Tidak    | Dinamis dari daftar bank aktif di `bank_products` (opsi "Belum tahu, mohon dicarikan yang cocok" sebagai default) |
 
 ### 3.6 Technical Requirements
 - **Responsiveness:** Mobile-first (70%+ traffic mobile)

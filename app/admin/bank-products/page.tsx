@@ -17,6 +17,7 @@ import {
   deleteBankProduct,
   type BankProductRow,
 } from "@/lib/actions/bank-products";
+import { formatRupiah } from "@/lib/format";
 import { ImageUploadField } from "@/components/image-upload-field";
 
 const EMPTY_FORM = {
@@ -166,14 +167,6 @@ export default function AdminBankProductsPage() {
     );
 
     loadProducts();
-  }
-
-  function formatRupiah(n: number | null) {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-    }).format(n ?? 0);
   }
 
   function updateField(field: string, value: string | number | boolean) {
