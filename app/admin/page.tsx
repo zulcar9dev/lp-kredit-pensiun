@@ -15,16 +15,31 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([fetchLeads(), fetchBankProducts()]).then(([l, b]) => {
-      setLeads(l);
-      setBanks(b);
-      setLoading(false);
-    });
+    Promise.all([fetchLeads({ limit: 0 }), fetchBankProducts()]).then(
+      ([l, b]) => {
+        setLeads(l.rows);
+        setBanks(b);
+        setLoading(false);
+      }
+    );
   }, []);
 
-  const todayStr = new Date().toISOString().split("T")[0];
+  const todayStr = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Jakarta",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+  const todayLeads = leads.filter(
+    (l) =>
+      new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Asia/Jakarta",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).format(new Date(l.created_at)) === todayStr
+  ).length;
   const totalLeads = leads.length;
-  const todayLeads = leads.filter((l) => l.created_at.startsWith(todayStr)).length;
   const newLeads = leads.filter((l) => l.status === "new").length;
   const processedLeads = leads.filter((l) => l.status === "processed").length;
   const closedLeads = leads.filter((l) => l.status === "closed").length;

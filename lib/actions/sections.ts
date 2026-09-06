@@ -11,6 +11,7 @@ export async function fetchSections(): Promise<SectionRow[]> {
   const { data, error } = await getInsforgeAdmin().database
     .from("sections")
     .select("*")
+    .is("deleted_at", null)
     .order("display_order", { ascending: true });
 
   if (error) {
@@ -59,8 +60,9 @@ export async function deleteSection(
   await requireAdmin();
   const { error } = await getInsforgeAdmin().database
     .from("sections")
-    .delete()
-    .eq("id", id);
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", id)
+    .is("deleted_at", null);
 
   if (error) {
     return { ok: false, error: error.message };

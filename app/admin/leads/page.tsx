@@ -13,11 +13,16 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import {
   fetchLeads,
+  exportLeads,
+  fetchLeadOptions,
   createLead,
   updateLead,
   deleteLead,
   type LeadRow,
+  type LeadFilters,
 } from "@/lib/actions/leads";
+import { PROVINCES } from "@/lib/provinces";
+import { PENSION_TYPES } from "@/lib/constants";
 
 const EMPTY_FORM = {
   name: "",
@@ -30,16 +35,25 @@ const EMPTY_FORM = {
   notes: "",
 };
 
+const PER_PAGE = 10;
+
 export default function AdminLeadsPage() {
   const [leads, setLeads] = useState<LeadRow[]>([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [bankOptions, setBankOptions] = useState<string[]>([]);
+  const [campaignOptions, setCampaignOptions] = useState<string[]>([]);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [pensionFilter, setPensionFilter] = useState("all");
+  const [provinceFilter, setProvinceFilter] = useState("all");
+  const [bankFilter, setBankFilter] = useState("all");
+  const [campaignFilter, setCampaignFilter] = useState("all");
+  const [sort, setSort] = useState<"newest" | "oldest">("newest");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const perPage = 8;
 
   const [showModal, setShowModal] = useState(false);
   const [showDetail, setShowDetail] = useState(false);
@@ -49,38 +63,59 @@ export default function AdminLeadsPage() {
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
 
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedSearch(search);
+      setCurrentPage(1);
+    }, 400);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const activeFilters = useMemo<LeadFilters>(() => ({
+    status: statusFilter === "all" ? undefined : statusFilter,
+    pensionType: pensionFilter === "all" ? undefined : pensionFilter,
+    province: provinceFilter === "all" ? undefined : provinceFilter,
+    interestedBank: bankFilter === "all" ? undefined : bankFilter,
+    campaign: campaignFilter === "all" ? undefined : campaignFilter,
+    search: debouncedSearch || undefined,
+    dateFrom: dateFrom || undefined,
+    dateTo: dateTo || undefined,
+    sort,
+    page: currentPage,
+    limit: PER_PAGE,
+  }), [
+    statusFilter,
+    pensionFilter,
+    provinceFilter,
+    bankFilter,
+    campaignFilter,
+    debouncedSearch,
+    dateFrom,
+    dateTo,
+    sort,
+    currentPage,
+  ]);
+
   const loadLeads = useCallback(async () => {
     setLoading(true);
-    const data = await fetchLeads({
-      dateFrom: dateFrom || undefined,
-      dateTo: dateTo || undefined,
-    });
-    setLeads(data);
+    const result = await fetchLeads(activeFilters);
+    setLeads(result.rows);
+    setTotal(result.count);
     setLoading(false);
-  }, [dateFrom, dateTo]);
+  }, [activeFilters]);
 
   useEffect(() => {
     loadLeads();
   }, [loadLeads]);
 
-  const filtered = useMemo(() => {
-    return leads.filter((l) => {
-      const matchSearch =
-        !search ||
-        l.name.toLowerCase().includes(search.toLowerCase()) ||
-        l.whatsapp.includes(search);
-      const matchStatus = statusFilter === "all" || l.status === statusFilter;
-      const matchPension =
-        pensionFilter === "all" || l.pension_type === pensionFilter;
-      return matchSearch && matchStatus && matchPension;
+  useEffect(() => {
+    fetchLeadOptions().then((o) => {
+      setBankOptions(o.banks);
+      setCampaignOptions(o.campaigns);
     });
-  }, [leads, search, statusFilter, pensionFilter]);
+  }, []);
 
-  const totalPages = Math.ceil(filtered.length / perPage);
-  const paginated = filtered.slice(
-    (currentPage - 1) * perPage,
-    currentPage * perPage
-  );
+  const totalPages = Math.ceil(total / PER_PAGE);
 
   function openAdd() {
     setEditingLead(null);
@@ -129,19 +164,8 @@ export default function AdminLeadsPage() {
       });
       setSaving(false);
       if (result.ok) {
-        setLeads((prev) =>
-          prev.map((l) =>
-            l.id === editingLead.id
-              ? {
-                  ...l,
-                  ...formData,
-                  interested_bank: formData.interested_bank || null,
-                  notes: formData.notes || null,
-                }
-              : l
-          )
-        );
         setShowModal(false);
+        loadLeads();
       } else {
         alert("Gagal menyimpan: " + result.error);
       }
@@ -157,28 +181,9 @@ export default function AdminLeadsPage() {
         notes: formData.notes || undefined,
       });
       setSaving(false);
-      if (result.ok && result.id) {
-        const newLead: LeadRow = {
-          id: result.id,
-          name: formData.name,
-          whatsapp: formData.whatsapp,
-          pension_type: formData.pension_type,
-          province: formData.province,
-          loan_amount: formData.loan_amount ?? null,
-          interested_bank: formData.interested_bank || null,
-          status: formData.status,
-          notes: formData.notes || null,
-          utm_source: null,
-          utm_medium: null,
-          utm_campaign: null,
-          utm_content: null,
-          utm_term: null,
-          ip_address: null,
-          created_at: new Date().toISOString(),
-          deleted_at: null,
-        };
-        setLeads((prev) => [newLead, ...prev]);
+      if (result.ok) {
         setShowModal(false);
+        loadLeads();
       } else {
         alert("Gagal menambah lead: " + result.error);
       }
@@ -191,11 +196,11 @@ export default function AdminLeadsPage() {
     const result = await deleteLead(selectedLead.id);
     setSaving(false);
     if (result.ok) {
-      setLeads((prev) => prev.filter((l) => l.id !== selectedLead.id));
+      setShowDelete(false);
+      loadLeads();
     } else {
       alert("Gagal menghapus: " + result.error);
     }
-    setShowDelete(false);
   }
 
   function formatRupiah(n: number | null) {
@@ -219,22 +224,41 @@ export default function AdminLeadsPage() {
   }
 
   async function handleExport() {
-    const XLSX = await import("xlsx");
-    const data = filtered.map((l) => ({
-      Nama: l.name,
-      WhatsApp: l.whatsapp,
-      "Jenis Pensiun": l.pension_type,
-      Provinsi: l.province,
-      "Pinjaman (Rp)": l.loan_amount ?? 0,
-      "Bank Diminati": l.interested_bank || "",
-      Status: statusLabel(l.status),
-      Catatan: l.notes || "",
-      Tanggal: formatDate(l.created_at),
-    }));
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Leads");
-    XLSX.writeFile(wb, `leads-${new Date().toISOString().slice(0, 10)}.xlsx`);
+    setSaving(true);
+    try {
+      const { limit: _l, page: _p, ...scope } = activeFilters;
+      const rows = await exportLeads(scope);
+      if (rows.length === 0) {
+        alert("Tidak ada data untuk diexport.");
+        return;
+      }
+      const XLSX = await import("xlsx");
+      const data = rows.map((l) => ({
+        Nama: l.name,
+        WhatsApp: l.whatsapp,
+        "Jenis Pensiun": l.pension_type,
+        Provinsi: l.province,
+        "Pinjaman (Rp)": l.loan_amount ?? 0,
+        "Bank Diminati": l.interested_bank || "",
+        Status: statusLabel(l.status),
+        Catatan: l.notes || "",
+        "UTM Source": l.utm_source || "",
+        "UTM Medium": l.utm_medium || "",
+        "UTM Campaign": l.utm_campaign || "",
+        "UTM Content": l.utm_content || "",
+        "UTM Term": l.utm_term || "",
+        "IP Address": l.ip_address || "",
+        Tanggal: new Date(l.created_at).toLocaleString("id-ID", {
+          timeZone: "Asia/Jakarta",
+        }),
+      }));
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Leads");
+      XLSX.writeFile(wb, `leads-${new Date().toISOString().slice(0, 10)}.xlsx`);
+    } finally {
+      setSaving(false);
+    }
   }
 
   const statusLabel = (s: string) =>
@@ -255,7 +279,7 @@ export default function AdminLeadsPage() {
             type="button"
             className="btn btn-secondary"
             onClick={handleExport}
-            disabled={filtered.length === 0}
+            disabled={saving || total === 0}
           >
             <ArrowDown weight="bold" />
             Export Excel
@@ -277,7 +301,6 @@ export default function AdminLeadsPage() {
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
-                setCurrentPage(1);
               }}
             />
           </div>
@@ -304,29 +327,96 @@ export default function AdminLeadsPage() {
             }}
           >
             <option value="all">Semua Jenis</option>
-            <option value="PNS">PNS</option>
-            <option value="TNI/Polri">TNI/Polri</option>
-            <option value="BUMN">BUMN</option>
-            <option value="Swasta">Swasta</option>
+            {PENSION_TYPES.map((p) => (
+              <option key={p} value={p}>
+                {p}
+              </option>
+            ))}
+          </select>
+          <select
+            className="form-select"
+            value={provinceFilter}
+            onChange={(e) => {
+              setProvinceFilter(e.target.value);
+              setCurrentPage(1);
+            }}
+          >
+            <option value="all">Semua Provinsi</option>
+            {PROVINCES.map((p) => (
+              <option key={p} value={p}>
+                {p}
+              </option>
+            ))}
+          </select>
+          <select
+            className="form-select"
+            value={bankFilter}
+            onChange={(e) => {
+              setBankFilter(e.target.value);
+              setCurrentPage(1);
+            }}
+          >
+            <option value="all">Semua Bank</option>
+            {bankOptions.map((b) => (
+              <option key={b} value={b}>
+                {b}
+              </option>
+            ))}
+          </select>
+          <select
+            className="form-select"
+            value={campaignFilter}
+            onChange={(e) => {
+              setCampaignFilter(e.target.value);
+              setCurrentPage(1);
+            }}
+          >
+            <option value="all">Semua Kampanye</option>
+            {campaignOptions.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+          <select
+            className="form-select"
+            value={sort}
+            onChange={(e) => setSort(e.target.value as "newest" | "oldest")}
+          >
+            <option value="newest">Terbaru</option>
+            <option value="oldest">Terlama</option>
           </select>
           <input
             type="date"
             className="form-input"
             value={dateFrom}
-            onChange={(e) => setDateFrom(e.target.value)}
+            onChange={(e) => {
+              setDateFrom(e.target.value);
+              setCurrentPage(1);
+            }}
             placeholder="Dari tanggal"
           />
           <input
             type="date"
             className="form-input"
             value={dateTo}
-            onChange={(e) => setDateTo(e.target.value)}
+            onChange={(e) => {
+              setDateTo(e.target.value);
+              setCurrentPage(1);
+            }}
             placeholder="Sampai tanggal"
           />
           <button
             type="button"
             className="btn btn-secondary btn-sm"
             onClick={() => {
+              setSearch("");
+              setStatusFilter("all");
+              setPensionFilter("all");
+              setProvinceFilter("all");
+              setBankFilter("all");
+              setCampaignFilter("all");
+              setSort("newest");
               setDateFrom("");
               setDateTo("");
               setCurrentPage(1);
@@ -360,7 +450,7 @@ export default function AdminLeadsPage() {
                     </div>
                   </td>
                 </tr>
-              ) : paginated.length === 0 ? (
+              ) : leads.length === 0 ? (
                 <tr>
                   <td colSpan={8}>
                     <div className="empty-state">
@@ -370,7 +460,7 @@ export default function AdminLeadsPage() {
                   </td>
                 </tr>
               ) : (
-                paginated.map((lead) => (
+                leads.map((lead) => (
                   <tr key={lead.id}>
                     <td className="table-link">{lead.name}</td>
                     <td className="table-mono">{lead.whatsapp}</td>
@@ -423,6 +513,9 @@ export default function AdminLeadsPage() {
 
         {totalPages > 1 && (
           <div className="pagination">
+            <span className="text-sm text-muted" style={{ marginRight: 8 }}>
+              {total} lead
+            </span>
             {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
               <button
                 key={p}
@@ -481,20 +574,27 @@ export default function AdminLeadsPage() {
                       updateField("pension_type", e.target.value)
                     }
                   >
-                    <option value="PNS">PNS</option>
-                    <option value="TNI/Polri">TNI/Polri</option>
-                    <option value="BUMN">BUMN</option>
-                    <option value="Swasta">Swasta</option>
+                    {PENSION_TYPES.map((p) => (
+                      <option key={p} value={p}>
+                        {p}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div className="form-group">
                   <label className="form-label">Provinsi</label>
-                  <input
-                    type="text"
-                    className="form-input"
+                  <select
+                    className="form-select"
                     value={formData.province}
                     onChange={(e) => updateField("province", e.target.value)}
-                  />
+                  >
+                    <option value="">Pilih provinsi</option>
+                    {PROVINCES.map((p) => (
+                      <option key={p} value={p}>
+                        {p}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
               <div className="form-row">

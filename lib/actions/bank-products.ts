@@ -11,6 +11,7 @@ export async function fetchBankProducts(): Promise<BankProductRow[]> {
   const { data, error } = await getInsforgeAdmin().database
     .from("bank_products")
     .select("*")
+    .is("deleted_at", null)
     .order("display_order", { ascending: true });
 
   if (error) {
@@ -59,8 +60,9 @@ export async function deleteBankProduct(
   await requireAdmin();
   const { error } = await getInsforgeAdmin().database
     .from("bank_products")
-    .delete()
-    .eq("id", id);
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", id)
+    .is("deleted_at", null);
 
   if (error) {
     return { ok: false, error: error.message };

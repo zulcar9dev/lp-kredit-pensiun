@@ -17,6 +17,7 @@ export async function fetchLandingData(): Promise<LandingData> {
       .from("bank_products")
       .select("*")
       .eq("is_active", true)
+      .is("deleted_at", null)
       .order("display_order", { ascending: true }),
     getInsforgeAdmin().database
       .from("testimonials")

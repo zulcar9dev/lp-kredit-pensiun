@@ -27,6 +27,14 @@ const EMPTY_FORM = {
   status: "draft" as SectionRow["status"],
 };
 
+function sectionContentToText(content: Record<string, unknown> | null): string {
+  if (!content) return "";
+  if (typeof content === "object" && typeof content.text === "string") {
+    return content.text;
+  }
+  return JSON.stringify(content);
+}
+
 const SECTION_TYPES = [
   { value: "hero", label: "Hero / Headline" },
   { value: "keunggulan", label: "Keunggulan" },
@@ -73,7 +81,7 @@ export default function AdminSectionsPage() {
     setFormData({
       section_type: item.section_type,
       title: item.title ?? "",
-      content: item.content ? JSON.stringify(item.content) : "",
+      content: sectionContentToText(item.content),
       image_url: item.image_url ?? "",
       display_order: item.display_order,
       status: item.status,
@@ -92,7 +100,9 @@ export default function AdminSectionsPage() {
       const result = await updateSection(editing.id, {
         section_type: formData.section_type,
         title: formData.title || null,
-        content: formData.content ? (formData.content as unknown as Record<string, unknown>) : null,
+        content: formData.content
+          ? { text: formData.content }
+          : null,
         image_url: formData.image_url || null,
         display_order: formData.display_order,
         status: formData.status,
@@ -108,7 +118,9 @@ export default function AdminSectionsPage() {
       const result = await createSection({
         section_type: formData.section_type,
         title: formData.title || null,
-        content: formData.content ? (formData.content as unknown as Record<string, unknown>) : null,
+        content: formData.content
+          ? { text: formData.content }
+          : null,
         image_url: formData.image_url || null,
         display_order: formData.display_order,
         status: formData.status,
@@ -223,9 +235,9 @@ export default function AdminSectionsPage() {
                     <td className="table-link">{item.title}</td>
                     <td>
                       <div className="section-preview">
-                        {typeof item.content === "object"
-                          ? JSON.stringify(item.content)
-                          : item.content ?? ""}
+                        {sectionContentToText(
+                          item.content as Record<string, unknown> | null
+                        )}
                       </div>
                     </td>
                     <td>

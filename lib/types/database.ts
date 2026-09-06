@@ -16,6 +16,7 @@ export interface Lead {
   ip_address: string | null;
   created_at: string;
   updated_at: string;
+  deleted_at?: string | null;
 }
 
 export interface BankProduct {
@@ -33,6 +34,7 @@ export interface BankProduct {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  deleted_at?: string | null;
 }
 
 export interface AppSetting {
@@ -52,6 +54,7 @@ export interface Section {
   status: "published" | "draft";
   created_at: string;
   updated_at: string;
+  deleted_at?: string | null;
 }
 
 export interface Testimonial {

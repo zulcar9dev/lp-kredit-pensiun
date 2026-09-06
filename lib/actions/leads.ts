@@ -6,52 +6,134 @@ import type { Lead } from "@/lib/types/database";
 
 export type LeadRow = Omit<Lead, "created_at" | "updated_at"> & {
   created_at: string;
-  deleted_at: string | null;
 };
 
-export async function fetchLeads(filters?: {
+export interface LeadFilters {
+  status?: string;
+  pensionType?: string;
+  province?: string;
+  interestedBank?: string;
+  campaign?: string;
+  search?: string;
   dateFrom?: string;
   dateTo?: string;
-}): Promise<LeadRow[]> {
+  sort?: "newest" | "oldest";
+  page?: number;
+  limit?: number;
+}
+
+export interface LeadListResult {
+  rows: LeadRow[];
+  count: number;
+}
+
+type FilterBuilder = {
+  eq: (col: string, val: string) => FilterBuilder;
+  gte: (col: string, val: string) => FilterBuilder;
+  lte: (col: string, val: string) => FilterBuilder;
+  or: (filters: string) => FilterBuilder;
+};
+
+function applyFilters(query: unknown, filters: LeadFilters): unknown {
+  let q = query as FilterBuilder;
+
+  if (filters.status) q = q.eq("status", filters.status);
+  if (filters.pensionType) q = q.eq("pension_type", filters.pensionType);
+  if (filters.province) q = q.eq("province", filters.province);
+  if (filters.interestedBank) q = q.eq("interested_bank", filters.interestedBank);
+  if (filters.campaign) q = q.eq("utm_campaign", filters.campaign);
+
+  if (filters.search) {
+    const term = filters.search.replace(/[%_,"()\\]/g, "").trim();
+    if (term) q = q.or(`name.ilike.*${term}*,whatsapp.ilike.*${term}*`);
+  }
+
+  if (filters.dateFrom) q = q.gte("created_at", filters.dateFrom);
+  if (filters.dateTo) q = q.lte("created_at", filters.dateTo + "T23:59:59");
+
+  return q;
+}
+
+export async function fetchLeads(
+  filters: LeadFilters = {}
+): Promise<LeadListResult> {
   await requireAdmin();
+
+  const limit = filters.limit ?? 10;
+  const page = filters.page ?? 1;
+
   let query = getInsforgeAdmin().database
     .from("leads")
-    .select("*")
-    .is("deleted_at", null)
-    .order("created_at", { ascending: false });
+    .select("*", { count: "exact" })
+    .is("deleted_at", null);
 
-  if (filters?.dateFrom) {
-    query = query.gte("created_at", filters.dateFrom);
-  }
-  if (filters?.dateTo) {
-    query = query.lte("created_at", filters.dateTo + "T23:59:59");
+  query = applyFilters(query, filters) as unknown as typeof query;
+
+  query = query.order("created_at", {
+    ascending: filters.sort === "oldest",
+  });
+
+  if (filters.limit !== 0) {
+    query = query.range((page - 1) * limit, page * limit - 1);
   }
 
-  const { data, error } = await query;
+  const { data, error, count } = await query;
 
   if (error) {
     console.error("fetchLeads error:", error);
+    return { rows: [], count: 0 };
+  }
+
+  return { rows: (data ?? []) as LeadRow[], count: count ?? 0 };
+}
+
+export async function fetchLeadOptions(): Promise<{
+  banks: string[];
+  campaigns: string[];
+}> {
+  await requireAdmin();
+
+  const { data } = await getInsforgeAdmin().database
+    .from("leads")
+    .select("interested_bank,utm_campaign")
+    .is("deleted_at", null);
+
+  const banks = new Set<string>();
+  const campaigns = new Set<string>();
+  for (const row of data ?? []) {
+    if (row.interested_bank) banks.add(row.interested_bank);
+    if (row.utm_campaign) campaigns.add(row.utm_campaign);
+  }
+
+  return {
+    banks: [...banks].sort(),
+    campaigns: [...campaigns].sort(),
+  };
+}
+
+export async function exportLeads(
+  filters: LeadFilters = {}
+): Promise<LeadRow[]> {
+  await requireAdmin();
+
+  let query = getInsforgeAdmin().database
+    .from("leads")
+    .select("*")
+    .is("deleted_at", null);
+
+  query = applyFilters(query, filters) as unknown as typeof query;
+  query = query.order("created_at", {
+    ascending: filters.sort === "oldest",
+  });
+
+  const { data, error } = await query.limit(10000);
+
+  if (error) {
+    console.error("exportLeads error:", error);
     return [];
   }
 
-  return data ?? [];
-}
-
-export async function updateLeadStatus(
-  id: string,
-  status: Lead["status"]
-): Promise<{ ok: boolean; error?: string }> {
-  await requireAdmin();
-  const { error } = await getInsforgeAdmin().database
-    .from("leads")
-    .update({ status })
-    .eq("id", id)
-    .is("deleted_at", null);
-
-  if (error) {
-    return { ok: false, error: error.message };
-  }
-  return { ok: true };
+  return (data ?? []) as LeadRow[];
 }
 
 export async function updateLead(
