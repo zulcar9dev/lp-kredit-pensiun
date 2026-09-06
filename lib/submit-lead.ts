@@ -4,6 +4,7 @@ import type { LeadPayload } from "@/lib/schema";
 export interface SubmitResult {
   ok: boolean;
   message?: string;
+  eventId?: string;
 }
 
 export async function submitLead(payload: LeadPayload): Promise<SubmitResult> {
@@ -66,7 +67,7 @@ export async function submitLead(payload: LeadPayload): Promise<SubmitResult> {
       };
     }
 
-    return { ok: true };
+    return { ok: true, eventId: data?.event_id };
   } catch (err) {
     console.error("submit-lead unexpected:", err);
     return {

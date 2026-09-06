@@ -24,7 +24,6 @@ import { submitLead } from "@/lib/submit-lead";
 import { formatRupiahShort } from "@/lib/format";
 import { buildWaLeadMessage } from "@/lib/wa";
 import { trackPixel } from "@/lib/pixel";
-import { sendCapiEvent } from "@/lib/capi";
 import { FieldError, inputClass, labelClass } from "@/components/field";
 import { WaButton } from "@/components/wa-button";
 import type { BankProduct } from "@/lib/types/database";
@@ -96,13 +95,12 @@ export function LeadForm({ bankProducts = [], waLink, waNumberIntl }: { bankProd
     });
 
     if (result.ok) {
-      const eventId = `lead-${Date.now()}`;
-      trackPixel("Lead", { event_id: eventId, content_name: "Kredit Pensiun" });
-      sendCapiEvent("Lead", eventId, {
-        ph: data.whatsapp,
-      }, {
-        content_name: "Kredit Pensiun",
-      });
+      if (result.eventId) {
+        trackPixel("Lead", {
+          event_id: result.eventId,
+          content_name: "Kredit Pensiun",
+        });
+      }
       clearLeadDraft();
       const personalizedMsg = buildWaLeadMessage(data);
       setPersonalizedWaLink(`https://wa.me/${waNumberIntl}?text=${encodeURIComponent(personalizedMsg)}`);

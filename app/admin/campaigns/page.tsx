@@ -311,7 +311,7 @@ export default function AdminCampaignsPage() {
                   />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Pixel ID</label>
+                  <label className="form-label">Pixel ID (informatif)</label>
                   <input
                     type="text"
                     className="form-input"
@@ -319,6 +319,10 @@ export default function AdminCampaignsPage() {
                     value={formData.pixel_id}
                     onChange={(e) => updateField("pixel_id", e.target.value)}
                   />
+                  <p className="mt-1 text-xs text-stone-500">
+                    Catatan: tracking pixel saat ini memakai Pixel ID dari
+                    konfigurasi server, kolom ini hanya dokumentasi per kampanye.
+                  </p>
                 </div>
               </div>
               <div className="form-group">

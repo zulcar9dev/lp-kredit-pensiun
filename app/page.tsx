@@ -9,6 +9,7 @@ import { LeadFormSection } from "@/components/lead-form-section";
 import { Faq } from "@/components/faq";
 import { SiteFooter } from "@/components/site-footer";
 import { ScrollTracker } from "@/components/scroll-tracker";
+import { UtmCapture } from "@/components/utm-capture";
 import { SITE_URL } from "@/lib/site";
 import { getAppSettings } from "@/lib/settings";
 import { fetchLandingData } from "@/lib/fetch-landing";
@@ -61,6 +62,7 @@ export default async function Home() {
   return (
     <>
       <SiteHeader />
+      <UtmCapture />
       <main>
         <Hero />
         <FloatingWhatsApp waLink={waLink} />
