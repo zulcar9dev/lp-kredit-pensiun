@@ -17,12 +17,14 @@ import {
   deleteSection,
   type SectionRow,
 } from "@/lib/actions/sections";
+import { ImageUploadField } from "@/components/image-upload-field";
 
 const EMPTY_FORM = {
   section_type: "",
   title: "",
   content: "",
   image_url: "",
+  image_key: "",
   display_order: 0,
   status: "draft" as SectionRow["status"],
 };
@@ -83,6 +85,7 @@ export default function AdminSectionsPage() {
       title: item.title ?? "",
       content: sectionContentToText(item.content),
       image_url: item.image_url ?? "",
+      image_key: item.image_key ?? "",
       display_order: item.display_order,
       status: item.status,
     });
@@ -104,6 +107,7 @@ export default function AdminSectionsPage() {
           ? { text: formData.content }
           : null,
         image_url: formData.image_url || null,
+        image_key: formData.image_key || null,
         display_order: formData.display_order,
         status: formData.status,
       });
@@ -122,6 +126,7 @@ export default function AdminSectionsPage() {
           ? { text: formData.content }
           : null,
         image_url: formData.image_url || null,
+        image_key: formData.image_key || null,
         display_order: formData.display_order,
         status: formData.status,
       });
@@ -370,15 +375,16 @@ export default function AdminSectionsPage() {
               </div>
               <div className="form-row">
                 <div className="form-group">
-                  <label className="form-label">URL Gambar</label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    placeholder="https://..."
-                    value={formData.image_url}
-                    onChange={(e) =>
-                      updateField("image_url", e.target.value)
-                    }
+                  <label className="form-label">Gambar</label>
+                  <ImageUploadField
+                    url={formData.image_url}
+                    folder="sections"
+                    maxSizeMB={2}
+                    hint="JPG/PNG/WebP, maksimal 2MB."
+                    onChange={(v) => {
+                      updateField("image_url", v?.url ?? "");
+                      updateField("image_key", v?.key ?? "");
+                    }}
                   />
                 </div>
                 <div className="form-group">

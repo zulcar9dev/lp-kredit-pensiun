@@ -2,6 +2,7 @@
 
 import { getInsforgeAdmin } from "@/lib/insforge";
 import { requireAdmin } from "@/lib/admin-auth";
+import { removeStoredImage } from "@/lib/remove-image";
 import type { BankProduct } from "@/lib/types/database";
 
 export type BankProductRow = Omit<BankProduct, "created_at" | "updated_at">;
@@ -43,6 +44,12 @@ export async function updateBankProduct(
   payload: Partial<Omit<BankProduct, "id" | "created_at" | "updated_at">>
 ): Promise<{ ok: boolean; error?: string }> {
   await requireAdmin();
+  const { data: current } = await getInsforgeAdmin().database
+    .from("bank_products")
+    .select("logo_key")
+    .eq("id", id)
+    .single();
+
   const { error } = await getInsforgeAdmin().database
     .from("bank_products")
     .update(payload)
@@ -50,6 +57,14 @@ export async function updateBankProduct(
 
   if (error) {
     return { ok: false, error: error.message };
+  }
+
+  if (
+    payload.logo_key !== undefined &&
+    current?.logo_key &&
+    current.logo_key !== payload.logo_key
+  ) {
+    await removeStoredImage(current.logo_key);
   }
   return { ok: true };
 }

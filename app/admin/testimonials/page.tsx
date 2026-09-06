@@ -18,12 +18,14 @@ import {
   deleteTestimonial,
   type TestimonialRow,
 } from "@/lib/actions/testimonials";
+import { ImageUploadField } from "@/components/image-upload-field";
 
 const EMPTY_FORM = {
   name: "",
   pension_type: "PNS",
   content: "",
   photo_url: "",
+  photo_key: "",
   rating: 5,
   is_featured: false,
   display_order: 0,
@@ -66,6 +68,7 @@ export default function AdminTestimonialsPage() {
       pension_type: item.pension_type ?? "PNS",
       content: item.content,
       photo_url: item.photo_url ?? "",
+      photo_key: item.photo_key ?? "",
       rating: item.rating,
       is_featured: item.is_featured,
       display_order: item.display_order,
@@ -86,6 +89,7 @@ export default function AdminTestimonialsPage() {
         pension_type: formData.pension_type,
         content: formData.content,
         photo_url: formData.photo_url || null,
+        photo_key: formData.photo_key || null,
         rating: formData.rating,
         is_featured: formData.is_featured,
         display_order: formData.display_order,
@@ -103,6 +107,7 @@ export default function AdminTestimonialsPage() {
         pension_type: formData.pension_type,
         content: formData.content,
         photo_url: formData.photo_url || null,
+        photo_key: formData.photo_key || null,
         rating: formData.rating,
         is_featured: formData.is_featured,
         display_order: formData.display_order,
@@ -377,17 +382,17 @@ export default function AdminTestimonialsPage() {
                 </div>
               </div>
               <div className="form-group">
-                <label className="form-label">Foto URL (opsional)</label>
-                <input
-                  type="url"
-                  className="form-input"
-                  placeholder="https://contoh.com/foto-nasabah.jpg"
-                  value={formData.photo_url}
-                  onChange={(e) => updateField("photo_url", e.target.value)}
+                <label className="form-label">Foto (opsional)</label>
+                <ImageUploadField
+                  url={formData.photo_url}
+                  folder="testimonial-photos"
+                  maxSizeMB={2}
+                  hint="JPG/PNG/WebP, maksimal 2MB. Kosongkan jika tidak ada."
+                  onChange={(v) => {
+                    updateField("photo_url", v?.url ?? "");
+                    updateField("photo_key", v?.key ?? "");
+                  }}
                 />
-                <p className="text-xs text-muted" style={{ marginTop: 4 }}>
-                  URL foto nasabah. Kosongkan jika tidak ada.
-                </p>
               </div>
               <div className="form-group">
                 <label className="form-check">

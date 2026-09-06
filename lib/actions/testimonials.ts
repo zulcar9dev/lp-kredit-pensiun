@@ -2,6 +2,7 @@
 
 import { getInsforgeAdmin } from "@/lib/insforge";
 import { requireAdmin } from "@/lib/admin-auth";
+import { removeStoredImage } from "@/lib/remove-image";
 import type { Testimonial } from "@/lib/types/database";
 
 export type TestimonialRow = Omit<Testimonial, "created_at">;
@@ -42,6 +43,12 @@ export async function updateTestimonial(
   payload: Partial<Omit<Testimonial, "id" | "created_at">>
 ): Promise<{ ok: boolean; error?: string }> {
   await requireAdmin();
+  const { data: current } = await getInsforgeAdmin().database
+    .from("testimonials")
+    .select("photo_key")
+    .eq("id", id)
+    .single();
+
   const { error } = await getInsforgeAdmin().database
     .from("testimonials")
     .update(payload)
@@ -50,6 +57,14 @@ export async function updateTestimonial(
   if (error) {
     return { ok: false, error: error.message };
   }
+
+  if (
+    payload.photo_key !== undefined &&
+    current?.photo_key &&
+    current.photo_key !== payload.photo_key
+  ) {
+    await removeStoredImage(current.photo_key);
+  }
   return { ok: true };
 }
 
@@ -57,6 +72,12 @@ export async function deleteTestimonial(
   id: string
 ): Promise<{ ok: boolean; error?: string }> {
   await requireAdmin();
+  const { data: current } = await getInsforgeAdmin().database
+    .from("testimonials")
+    .select("photo_key")
+    .eq("id", id)
+    .single();
+
   const { error } = await getInsforgeAdmin().database
     .from("testimonials")
     .delete()
@@ -65,5 +86,7 @@ export async function deleteTestimonial(
   if (error) {
     return { ok: false, error: error.message };
   }
+
+  await removeStoredImage(current?.photo_key);
   return { ok: true };
 }

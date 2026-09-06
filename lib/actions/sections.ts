@@ -2,6 +2,7 @@
 
 import { getInsforgeAdmin } from "@/lib/insforge";
 import { requireAdmin } from "@/lib/admin-auth";
+import { removeStoredImage } from "@/lib/remove-image";
 import type { Section } from "@/lib/types/database";
 
 export type SectionRow = Omit<Section, "created_at" | "updated_at">;
@@ -43,6 +44,12 @@ export async function updateSection(
   payload: Partial<Omit<Section, "id" | "created_at" | "updated_at">>
 ): Promise<{ ok: boolean; error?: string }> {
   await requireAdmin();
+  const { data: current } = await getInsforgeAdmin().database
+    .from("sections")
+    .select("image_key")
+    .eq("id", id)
+    .single();
+
   const { error } = await getInsforgeAdmin().database
     .from("sections")
     .update(payload)
@@ -50,6 +57,14 @@ export async function updateSection(
 
   if (error) {
     return { ok: false, error: error.message };
+  }
+
+  if (
+    payload.image_key !== undefined &&
+    current?.image_key &&
+    current.image_key !== payload.image_key
+  ) {
+    await removeStoredImage(current.image_key);
   }
   return { ok: true };
 }

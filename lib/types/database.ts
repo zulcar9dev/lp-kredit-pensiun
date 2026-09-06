@@ -30,6 +30,7 @@ export interface BankProduct {
   tenor_max: number | null;
   notes: string | null;
   logo_url: string | null;
+  logo_key: string | null;
   display_order: number;
   is_active: boolean;
   created_at: string;
@@ -50,6 +51,7 @@ export interface Section {
   title: string | null;
   content: Record<string, unknown> | null;
   image_url: string | null;
+  image_key: string | null;
   display_order: number;
   status: "published" | "draft";
   created_at: string;
@@ -63,6 +65,7 @@ export interface Testimonial {
   pension_type: string | null;
   content: string;
   photo_url: string | null;
+  photo_key: string | null;
   rating: number;
   is_featured: boolean;
   display_order: number;

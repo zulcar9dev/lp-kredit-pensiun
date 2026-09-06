@@ -17,6 +17,7 @@ import {
   deleteBankProduct,
   type BankProductRow,
 } from "@/lib/actions/bank-products";
+import { ImageUploadField } from "@/components/image-upload-field";
 
 const EMPTY_FORM = {
   bank_name: "",
@@ -28,6 +29,7 @@ const EMPTY_FORM = {
   tenor_max: 60,
   notes: "",
   logo_url: "",
+  logo_key: "",
   display_order: 0,
   is_active: true,
 };
@@ -74,6 +76,7 @@ export default function AdminBankProductsPage() {
       tenor_max: item.tenor_max ?? 60,
       notes: item.notes ?? "",
       logo_url: item.logo_url ?? "",
+      logo_key: item.logo_key ?? "",
       display_order: item.display_order,
       is_active: item.is_active,
     });
@@ -98,6 +101,7 @@ export default function AdminBankProductsPage() {
         tenor_max: formData.tenor_max ?? null,
         notes: formData.notes || null,
         logo_url: formData.logo_url || null,
+        logo_key: formData.logo_key || null,
         display_order: formData.display_order,
         is_active: formData.is_active,
       });
@@ -119,6 +123,7 @@ export default function AdminBankProductsPage() {
         tenor_max: formData.tenor_max ?? null,
         notes: formData.notes || null,
         logo_url: formData.logo_url || null,
+        logo_key: formData.logo_key || null,
         display_order: formData.display_order,
         is_active: formData.is_active,
       });
@@ -425,17 +430,17 @@ export default function AdminBankProductsPage() {
                 />
               </div>
               <div className="form-group">
-                <label className="form-label">Logo URL (opsional)</label>
-                <input
-                  type="url"
-                  className="form-input"
-                  placeholder="https://contoh.com/logo-bank.png"
-                  value={formData.logo_url}
-                  onChange={(e) => updateField("logo_url", e.target.value)}
+                <label className="form-label">Logo (opsional)</label>
+                <ImageUploadField
+                  url={formData.logo_url}
+                  folder="bank-logos"
+                  maxSizeMB={1}
+                  hint="JPG/PNG/WebP, maksimal 1MB. Kosongkan jika tidak ada."
+                  onChange={(v) => {
+                    updateField("logo_url", v?.url ?? "");
+                    updateField("logo_key", v?.key ?? "");
+                  }}
                 />
-                <p className="text-xs text-muted" style={{ marginTop: 4 }}>
-                  URL gambar logo bank. Kosongkan jika tidak ada.
-                </p>
               </div>
               <div className="form-group">
                 <label className="form-check">
