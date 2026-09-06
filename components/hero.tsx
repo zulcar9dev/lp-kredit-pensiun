@@ -1,7 +1,12 @@
 import { WaButton } from "@/components/wa-button";
 import { TelLink } from "@/components/tel-link";
+import { getAppSettings } from "@/lib/settings";
+import { buildWaLink } from "@/lib/wa";
 
-export function Hero() {
+export async function Hero() {
+  const settings = await getAppSettings();
+  const waLink = buildWaLink(settings);
+
   return (
     <section id="top" className="relative overflow-hidden">
       <div className="container-page grid items-center gap-10 pb-14 pt-10 md:pt-16 lg:grid-cols-[1fr_420px] lg:gap-14">
@@ -17,12 +22,18 @@ export function Hero() {
             yang pas dengan dana pensiun Bapak/Ibu.
           </p>
 
-          <div className="mt-8">
-            <WaButton size="lg" className="w-full sm:w-auto" />
+          <div className="mt-8 flex flex-wrap gap-3">
+            <WaButton waLink={waLink} size="lg" className="w-full sm:w-auto" />
+            <a
+              href="#ajukan"
+              className="inline-flex min-h-[56px] items-center justify-center rounded-xl border-2 border-navy-200 px-7 text-lg font-semibold text-navy-800 transition-colors hover:border-bni-400 hover:text-bni-700 active:scale-[0.99]"
+            >
+              Ajukan Sekarang
+            </a>
           </div>
 
           <p className="mt-6 text-base text-stone-600">
-            Lebih suka menelepon langsung? <TelLink className="ml-1" />
+            Lebih suka menelepon langsung? <TelLink number={settings.waNumberDisplay} className="ml-1" />
           </p>
         </div>
 
@@ -35,7 +46,7 @@ export function Hero() {
               Konsultasi gratis, tanpa komitmen. Cukup chat WhatsApp, saya
               bantu urus dari awal sampai cair.
             </p>
-            <WaButton size="lg" className="w-full" />
+            <WaButton waLink={waLink} size="lg" className="w-full" />
           </div>
         </div>
       </div>

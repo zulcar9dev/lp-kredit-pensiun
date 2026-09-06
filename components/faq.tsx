@@ -1,7 +1,9 @@
 import { CaretDown } from "@phosphor-icons/react/dist/ssr";
-import { FAQS } from "@/lib/constants";
+import type { Faq } from "@/lib/types/database";
 
-export function Faq() {
+export function Faq({ items }: { items: Faq[] }) {
+  if (items.length === 0) return null;
+
   return (
     <section id="faq" className="bg-white">
       <div className="container-page max-w-3xl py-16 md:py-24">
@@ -10,8 +12,8 @@ export function Faq() {
         </h2>
 
         <div className="mt-10 divide-y divide-stone-200 border-y border-stone-200">
-          {FAQS.map((faq) => (
-            <details key={faq.question} className="group">
+          {items.map((faq) => (
+            <details key={faq.id} className="group">
               <summary className="flex min-h-[64px] cursor-pointer list-none items-center justify-between gap-4 py-4 text-lg font-bold text-navy-900 transition-colors hover:text-bni-700 [&::-webkit-details-marker]:hidden">
                 <span>{faq.question}</span>
                 <CaretDown

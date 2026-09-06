@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { MOCK_SECTIONS, type Section } from "@/lib/admin-data";
+import { useState, useEffect, useCallback } from "react";
 import {
   Plus,
   X,
@@ -9,15 +8,23 @@ import {
   Trash,
   ArrowUp,
   ArrowDown,
+  CircleNotch,
 } from "@phosphor-icons/react/dist/ssr";
+import {
+  fetchSections,
+  createSection,
+  updateSection,
+  deleteSection,
+  type SectionRow,
+} from "@/lib/actions/sections";
 
-const EMPTY_FORM: Omit<Section, "id"> = {
-  sectionType: "",
+const EMPTY_FORM = {
+  section_type: "",
   title: "",
   content: "",
-  imageUrl: "",
-  displayOrder: 0,
-  status: "draft",
+  image_url: "",
+  display_order: 0,
+  status: "draft" as SectionRow["status"],
 };
 
 const SECTION_TYPES = [
@@ -32,93 +39,128 @@ const SECTION_TYPES = [
 ];
 
 export default function AdminSectionsPage() {
-  const [sections, setSections] = useState<Section[]>(MOCK_SECTIONS);
+  const [sections, setSections] = useState<SectionRow[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
-  const [editing, setEditing] = useState<Section | null>(null);
-  const [selected, setSelected] = useState<Section | null>(null);
+  const [editing, setEditing] = useState<SectionRow | null>(null);
+  const [selected, setSelected] = useState<SectionRow | null>(null);
   const [formData, setFormData] = useState(EMPTY_FORM);
+  const [saving, setSaving] = useState(false);
+
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    const data = await fetchSections();
+    setSections(data);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   function openAdd() {
     setEditing(null);
     setFormData({
       ...EMPTY_FORM,
-      displayOrder: sections.length + 1,
+      display_order: sections.length + 1,
     });
     setShowModal(true);
   }
 
-  function openEdit(item: Section) {
+  function openEdit(item: SectionRow) {
     setEditing(item);
     setFormData({
-      sectionType: item.sectionType,
-      title: item.title,
-      content: item.content,
-      imageUrl: item.imageUrl,
-      displayOrder: item.displayOrder,
+      section_type: item.section_type,
+      title: item.title ?? "",
+      content: item.content ? JSON.stringify(item.content) : "",
+      image_url: item.image_url ?? "",
+      display_order: item.display_order,
       status: item.status,
     });
     setShowModal(true);
   }
 
-  function openDelete(item: Section) {
+  function openDelete(item: SectionRow) {
     setSelected(item);
     setShowDelete(true);
   }
 
-  function handleSave() {
+  async function handleSave() {
+    setSaving(true);
     if (editing) {
-      setSections((prev) =>
-        prev.map((s) =>
-          s.id === editing.id ? { ...s, ...formData } : s
-        )
-      );
+      const result = await updateSection(editing.id, {
+        section_type: formData.section_type,
+        title: formData.title || null,
+        content: formData.content ? (formData.content as unknown as Record<string, unknown>) : null,
+        image_url: formData.image_url || null,
+        display_order: formData.display_order,
+        status: formData.status,
+      });
+      setSaving(false);
+      if (result.ok) {
+        loadData();
+        setShowModal(false);
+      } else {
+        alert("Gagal menyimpan: " + result.error);
+      }
     } else {
-      const newItem: Section = {
-        ...formData,
-        id: `s-${Date.now()}`,
-      };
-      setSections((prev) => [...prev, newItem]);
+      const result = await createSection({
+        section_type: formData.section_type,
+        title: formData.title || null,
+        content: formData.content ? (formData.content as unknown as Record<string, unknown>) : null,
+        image_url: formData.image_url || null,
+        display_order: formData.display_order,
+        status: formData.status,
+      });
+      setSaving(false);
+      if (result.ok) {
+        loadData();
+        setShowModal(false);
+      } else {
+        alert("Gagal menyimpan: " + result.error);
+      }
     }
-    setShowModal(false);
   }
 
-  function handleDelete() {
-    if (selected) {
-      setSections((prev) => prev.filter((s) => s.id !== selected.id));
+  async function handleDelete() {
+    if (!selected) return;
+    setSaving(true);
+    const result = await deleteSection(selected.id);
+    setSaving(false);
+    if (result.ok) {
+      loadData();
+    } else {
+      alert("Gagal menghapus: " + result.error);
     }
     setShowDelete(false);
   }
 
-  function toggleStatus(id: string) {
-    setSections((prev) =>
-      prev.map((s) =>
-        s.id === id
-          ? {
-              ...s,
-              status: s.status === "published" ? "draft" : "published",
-            }
-          : s
+  async function toggleStatus(item: SectionRow) {
+    const newStatus = item.status === "published" ? "draft" : "published";
+    await updateSection(item.id, { status: newStatus });
+    loadData();
+  }
+
+  async function moveItem(id: string, direction: "up" | "down") {
+    const idx = sections.findIndex((s) => s.id === id);
+    if (idx === -1) return;
+    const newIdx = direction === "up" ? idx - 1 : idx + 1;
+    if (newIdx < 0 || newIdx >= sections.length) return;
+
+    const updated = [...sections];
+    [updated[idx], updated[newIdx]] = [updated[newIdx], updated[idx]];
+
+    await Promise.all(
+      updated.map((s, i) =>
+        updateSection(s.id, { display_order: i + 1 })
       )
     );
+
+    loadData();
   }
 
-  function moveItem(id: string, direction: "up" | "down") {
-    setSections((prev) => {
-      const idx = prev.findIndex((s) => s.id === id);
-      if (idx === -1) return prev;
-      const newIdx = direction === "up" ? idx - 1 : idx + 1;
-      if (newIdx < 0 || newIdx >= prev.length) return prev;
-      const updated = [...prev];
-      [updated[idx], updated[newIdx]] = [updated[newIdx], updated[idx]];
-      return updated.map((s, i) => ({ ...s, displayOrder: i + 1 }));
-    });
-  }
-
-  function updateField(
-    field: keyof typeof formData,
-    value: string | number
-  ) {
+  function updateField(field: string, value: string | number) {
     setFormData((prev) => ({ ...prev, [field]: value }));
   }
 
@@ -152,71 +194,94 @@ export default function AdminSectionsPage() {
               </tr>
             </thead>
             <tbody>
-              {sections.map((item, idx) => (
-                <tr key={item.id}>
-                  <td className="text-muted">{idx + 1}</td>
-                  <td>
-                    <span className="badge badge-info">
-                      {getSectionLabel(item.sectionType)}
-                    </span>
-                  </td>
-                  <td className="table-link">{item.title}</td>
-                  <td>
-                    <div className="section-preview">{item.content}</div>
-                  </td>
-                  <td>
-                    <button
-                      type="button"
-                      className={`badge badge-${item.status}`}
-                      onClick={() => toggleStatus(item.id)}
-                      style={{ cursor: "pointer", border: "none" }}
-                    >
-                      {item.status === "published"
-                        ? "Published"
-                        : "Draft"}
-                    </button>
-                  </td>
-                  <td>
-                    <div className="table-actions justify-end">
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-icon btn-sm"
-                        onClick={() => moveItem(item.id, "up")}
-                        disabled={idx === 0}
-                        title="Naik"
-                      >
-                        <ArrowUp weight="bold" />
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-icon btn-sm"
-                        onClick={() => moveItem(item.id, "down")}
-                        disabled={idx === sections.length - 1}
-                        title="Turun"
-                      >
-                        <ArrowDown weight="bold" />
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-icon btn-sm"
-                        onClick={() => openEdit(item)}
-                        title="Edit"
-                      >
-                        <PencilSimple weight="bold" />
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-icon btn-sm"
-                        onClick={() => openDelete(item)}
-                        title="Hapus"
-                        style={{ color: "var(--red-500)" }}
-                      >
-                        <Trash weight="bold" />
-                      </button>
+              {loading ? (
+                <tr>
+                  <td colSpan={6}>
+                    <div className="empty-state">
+                      <CircleNotch weight="bold" className="animate-spin" />
+                      <p>Memuat data...</p>
                     </div>
                   </td>
                 </tr>
-              ))}
+              ) : sections.length === 0 ? (
+                <tr>
+                  <td colSpan={6}>
+                    <div className="empty-state">
+                      <p>Belum ada section</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                sections.map((item, idx) => (
+                  <tr key={item.id}>
+                    <td className="text-muted">{idx + 1}</td>
+                    <td>
+                      <span className="badge badge-info">
+                        {getSectionLabel(item.section_type)}
+                      </span>
+                    </td>
+                    <td className="table-link">{item.title}</td>
+                    <td>
+                      <div className="section-preview">
+                        {typeof item.content === "object"
+                          ? JSON.stringify(item.content)
+                          : item.content ?? ""}
+                      </div>
+                    </td>
+                    <td>
+                      <button
+                        type="button"
+                        className={`badge badge-${item.status}`}
+                        onClick={() => toggleStatus(item)}
+                        style={{ cursor: "pointer", border: "none" }}
+                      >
+                        {item.status === "published"
+                          ? "Published"
+                          : "Draft"}
+                      </button>
+                    </td>
+                    <td>
+                      <div className="table-actions justify-end">
+                        <button
+                          type="button"
+                          className="btn btn-ghost btn-icon btn-sm"
+                          onClick={() => moveItem(item.id, "up")}
+                          disabled={idx === 0}
+                          title="Naik"
+                        >
+                          <ArrowUp weight="bold" />
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-ghost btn-icon btn-sm"
+                          onClick={() => moveItem(item.id, "down")}
+                          disabled={idx === sections.length - 1}
+                          title="Turun"
+                        >
+                          <ArrowDown weight="bold" />
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-ghost btn-icon btn-sm"
+                          onClick={() => openEdit(item)}
+                          title="Edit"
+                        >
+                          <PencilSimple weight="bold" />
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-ghost btn-icon btn-sm"
+                          onClick={() => openDelete(item)}
+                          title="Hapus"
+                          style={{ color: "var(--red-500)" }}
+                        >
+                          <Trash weight="bold" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -241,9 +306,9 @@ export default function AdminSectionsPage() {
                   <label className="form-label">Jenis Section</label>
                   <select
                     className="form-select"
-                    value={formData.sectionType}
+                    value={formData.section_type}
                     onChange={(e) =>
-                      updateField("sectionType", e.target.value)
+                      updateField("section_type", e.target.value)
                     }
                   >
                     <option value="">Pilih jenis...</option>
@@ -260,10 +325,7 @@ export default function AdminSectionsPage() {
                     className="form-select"
                     value={formData.status}
                     onChange={(e) =>
-                      updateField(
-                        "status",
-                        e.target.value as "published" | "draft"
-                      )
+                      updateField("status", e.target.value)
                     }
                   >
                     <option value="published">Published</option>
@@ -301,9 +363,9 @@ export default function AdminSectionsPage() {
                     type="text"
                     className="form-input"
                     placeholder="https://..."
-                    value={formData.imageUrl}
+                    value={formData.image_url}
                     onChange={(e) =>
-                      updateField("imageUrl", e.target.value)
+                      updateField("image_url", e.target.value)
                     }
                   />
                 </div>
@@ -312,9 +374,9 @@ export default function AdminSectionsPage() {
                   <input
                     type="number"
                     className="form-input"
-                    value={formData.displayOrder}
+                    value={formData.display_order}
                     onChange={(e) =>
-                      updateField("displayOrder", Number(e.target.value))
+                      updateField("display_order", Number(e.target.value))
                     }
                   />
                 </div>
@@ -325,6 +387,7 @@ export default function AdminSectionsPage() {
                 type="button"
                 className="btn btn-secondary"
                 onClick={() => setShowModal(false)}
+                disabled={saving}
               >
                 Batal
               </button>
@@ -332,8 +395,15 @@ export default function AdminSectionsPage() {
                 type="button"
                 className="btn btn-primary"
                 onClick={handleSave}
+                disabled={saving}
               >
-                {editing ? "Simpan Perubahan" : "Tambah Section"}
+                {saving ? (
+                  <CircleNotch weight="bold" className="animate-spin" />
+                ) : editing ? (
+                  "Simpan Perubahan"
+                ) : (
+                  "Tambah Section"
+                )}
               </button>
             </div>
           </div>
@@ -364,6 +434,7 @@ export default function AdminSectionsPage() {
                 type="button"
                 className="btn btn-secondary"
                 onClick={() => setShowDelete(false)}
+                disabled={saving}
               >
                 Batal
               </button>
@@ -371,9 +442,16 @@ export default function AdminSectionsPage() {
                 type="button"
                 className="btn btn-danger"
                 onClick={handleDelete}
+                disabled={saving}
               >
-                <Trash weight="bold" />
-                Hapus
+                {saving ? (
+                  <CircleNotch weight="bold" className="animate-spin" />
+                ) : (
+                  <>
+                    <Trash weight="bold" />
+                    Hapus
+                  </>
+                )}
               </button>
             </div>
           </div>

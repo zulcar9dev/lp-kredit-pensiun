@@ -1,7 +1,7 @@
 import Image from "next/image";
-import { getActiveBankProducts, type BankProduct } from "@/lib/bank-products";
 import { LEGAL } from "@/lib/constants";
 import { formatRupiahShort } from "@/lib/format";
+import type { BankProduct } from "@/lib/types/database";
 
 function BankInitial({ name }: { name: string }) {
   const initials = name
@@ -33,38 +33,38 @@ function SpecLine({ label, value }: { label: string; value: string }) {
 
 function BankCard({ product }: { product: BankProduct }) {
   const plafon =
-    product.plafonMin && product.plafonMax
-      ? `${formatRupiahShort(product.plafonMin)} - ${formatRupiahShort(product.plafonMax)}`
-      : product.plafonMax
-        ? `hingga ${formatRupiahShort(product.plafonMax)}`
+    product.plafon_min && product.plafon_max
+      ? `${formatRupiahShort(product.plafon_min)} - ${formatRupiahShort(product.plafon_max)}`
+      : product.plafon_max
+        ? `hingga ${formatRupiahShort(product.plafon_max)}`
         : "Menyesuaikan";
 
   const tenor =
-    product.tenorMinYears && product.tenorMaxYears
-      ? `${product.tenorMinYears}-${product.tenorMaxYears} tahun`
+    product.tenor_min && product.tenor_max
+      ? `${product.tenor_min}-${product.tenor_max} tahun`
       : undefined;
 
   return (
     <article className="flex w-[280px] shrink-0 snap-start flex-col rounded-xl border border-stone-200 bg-white p-6 shadow-card sm:w-[320px]">
       <div className="flex items-center gap-3.5">
-        {product.logoUrl ? (
+        {product.logo_url ? (
           <Image
-            src={product.logoUrl}
-            alt={`Logo ${product.bankName}`}
+            src={product.logo_url}
+            alt={`Logo ${product.bank_name}`}
             width={48}
             height={48}
             className="size-12 shrink-0 rounded-xl border border-stone-200 object-contain p-1"
           />
         ) : (
-          <BankInitial name={product.bankName} />
+          <BankInitial name={product.bank_name} />
         )}
         <div className="min-w-0">
           <h3 className="truncate text-lg font-extrabold tracking-tight text-navy-900">
-            {product.bankName}
+            {product.bank_name}
           </h3>
-          {product.productName && (
+          {product.product_name && (
             <p className="truncate text-sm text-stone-600">
-              {product.productName}
+              {product.product_name}
             </p>
           )}
         </div>
@@ -73,10 +73,10 @@ function BankCard({ product }: { product: BankProduct }) {
       <dl className="mt-5 space-y-2.5 border-t border-stone-100 pt-5">
         <SpecLine label="Plafon" value={plafon} />
         {tenor && <SpecLine label="Tenor" value={tenor} />}
-        {typeof product.bungaIndikatif === "number" && (
+        {typeof product.bunga_indikatif === "number" && (
           <SpecLine
             label="Bunga indikatif"
-            value={`${product.bungaIndikatif.toFixed(2).replace(".", ",")}% per tahun`}
+            value={`${product.bunga_indikatif.toFixed(2).replace(".", ",")}% per tahun`}
           />
         )}
       </dl>
@@ -90,8 +90,7 @@ function BankCard({ product }: { product: BankProduct }) {
   );
 }
 
-export function BankPartners() {
-  const products = getActiveBankProducts();
+export function BankPartners({ products }: { products: BankProduct[] }) {
   if (products.length === 0) return null;
 
   return (

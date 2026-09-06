@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { HandCoins, WarningCircle } from "@phosphor-icons/react/dist/ssr";
+import { signIn } from "@/app/actions/auth";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -12,24 +13,24 @@ export default function AdminLoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     setLoading(true);
 
-    setTimeout(() => {
-      if (
-        email === "admin@kreditpensiun.com" &&
-        password === "admin123"
-      ) {
-        document.cookie =
-          "admin_session=authenticated; path=/admin; max-age=1800";
-        router.push("/admin");
-      } else {
-        setError("Email atau password salah");
+    try {
+      const result = await signIn(email, password);
+
+      if (result.error) {
+        setError(result.error);
         setLoading(false);
+      } else {
+        router.push("/admin");
       }
-    }, 500);
+    } catch {
+      setError("Gagal menghubungi server. Silakan coba lagi.");
+      setLoading(false);
+    }
   }
 
   return (

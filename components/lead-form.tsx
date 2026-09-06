@@ -17,7 +17,6 @@ import {
   PENSION_TYPES,
 } from "@/lib/constants";
 import { PROVINCES } from "@/lib/provinces";
-import { getActiveBankProducts } from "@/lib/bank-products";
 import { leadSchema, type LeadData, type LeadInput } from "@/lib/schema";
 import { clearLeadDraft, readLeadDraft, takeLeadDraftLoanAmount } from "@/lib/draft";
 import { readStoredUtm } from "@/lib/utm";
@@ -25,25 +24,27 @@ import { submitLead } from "@/lib/submit-lead";
 import { formatRupiahShort } from "@/lib/format";
 import { buildWaLeadMessage } from "@/lib/wa";
 import { trackPixel } from "@/lib/pixel";
+import { sendCapiEvent } from "@/lib/capi";
 import { FieldError, inputClass, labelClass } from "@/components/field";
 import { WaButton } from "@/components/wa-button";
+import type { BankProduct } from "@/lib/types/database";
 
-const BANK_OPTIONS = [
-  BANK_DEFAULT_OPTION,
-  ...getActiveBankProducts().map(
-    (product) =>
-      product.productName
-        ? `${product.bankName} - ${product.productName}`
-        : product.bankName,
-  ),
-];
+export function LeadForm({ bankProducts = [], waLink, waNumberIntl }: { bankProducts?: BankProduct[]; waLink: string; waNumberIntl: string }) {
+  const BANK_OPTIONS = [
+    BANK_DEFAULT_OPTION,
+    ...bankProducts.map(
+      (product) =>
+        product.product_name
+          ? `${product.bank_name} - ${product.product_name}`
+          : product.bank_name,
+    ),
+  ];
 
-export function LeadForm() {
   const [status, setStatus] = useState<"idle" | "submitting" | "success">(
     "idle",
   );
   const [serverError, setServerError] = useState<string | null>(null);
-  const [waMessage, setWaMessage] = useState<string | null>(null);
+  const [personalizedWaLink, setPersonalizedWaLink] = useState<string | null>(null);
   const [carriedFromEstimate, setCarriedFromEstimate] = useState(false);
 
   const {
@@ -95,9 +96,16 @@ export function LeadForm() {
     });
 
     if (result.ok) {
-      trackPixel("Lead", { content_name: "Kredit Pensiun" });
+      const eventId = `lead-${Date.now()}`;
+      trackPixel("Lead", { event_id: eventId, content_name: "Kredit Pensiun" });
+      sendCapiEvent("Lead", eventId, {
+        ph: data.whatsapp,
+      }, {
+        content_name: "Kredit Pensiun",
+      });
       clearLeadDraft();
-      setWaMessage(buildWaLeadMessage(data));
+      const personalizedMsg = buildWaLeadMessage(data);
+      setPersonalizedWaLink(`https://wa.me/${waNumberIntl}?text=${encodeURIComponent(personalizedMsg)}`);
       setStatus("success");
     } else {
       setServerError(
@@ -127,13 +135,14 @@ export function LeadForm() {
           cocok. Mau lebih cepat? Chat saja sekarang.
         </p>
         <div className="mt-5 flex flex-wrap gap-3">
-          <WaButton size="lg" message={waMessage ?? undefined} />
+          <WaButton waLink={personalizedWaLink ?? waLink} size="lg" />
           <button
             type="button"
             onClick={() => {
               reset({
                 name: "",
                 whatsapp: "",
+                pensionType: undefined,
                 province: "",
                 loanAmount: LOAN_DEFAULT,
                 interestedBank: BANK_DEFAULT_OPTION,

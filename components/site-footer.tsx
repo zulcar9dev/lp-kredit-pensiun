@@ -2,6 +2,7 @@ import Link from "next/link";
 import { HandCoins, Info, WhatsappLogo } from "@phosphor-icons/react/dist/ssr";
 import { CTA_LABEL, LEGAL } from "@/lib/constants";
 import { getAppSettings } from "@/lib/settings";
+import { buildWaLink } from "@/lib/wa";
 import { WaButton } from "@/components/wa-button";
 
 const NAV_LINKS = [
@@ -12,8 +13,9 @@ const NAV_LINKS = [
   { href: "/#faq", label: "Tanya Jawab" },
 ];
 
-export function SiteFooter() {
-  const settings = getAppSettings();
+export async function SiteFooter() {
+  const settings = await getAppSettings();
+  const waLink = buildWaLink(settings);
 
   return (
     <footer className="border-t border-stone-200 bg-stone-100">
@@ -67,7 +69,7 @@ export function SiteFooter() {
             <p className="mt-1 text-xl font-extrabold tracking-tight text-navy-900">
               {settings.waNumberDisplay}
             </p>
-            <WaButton label={CTA_LABEL} className="mt-4 w-full sm:w-auto" />
+            <WaButton waLink={waLink} label={CTA_LABEL} className="mt-4 w-full sm:w-auto" />
           </div>
         </div>
 

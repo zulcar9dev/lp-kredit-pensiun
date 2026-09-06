@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { MOCK_LEADS, type Lead } from "@/lib/admin-data";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import {
   Plus,
   X,
@@ -9,37 +8,60 @@ import {
   Trash,
   MagnifyingGlass,
   Eye,
+  CircleNotch,
+  ArrowDown,
 } from "@phosphor-icons/react/dist/ssr";
+import {
+  fetchLeads,
+  createLead,
+  updateLead,
+  deleteLead,
+  type LeadRow,
+} from "@/lib/actions/leads";
 
-const EMPTY_LEAD: Omit<Lead, "id" | "createdAt"> = {
+const EMPTY_FORM = {
   name: "",
   whatsapp: "",
-  pensionType: "PNS",
+  pension_type: "PNS" as string,
   province: "",
-  loanAmount: 0,
-  interestedBank: "",
-  status: "new",
-  utmSource: "",
-  utmCampaign: "",
+  loan_amount: null as number | null,
+  interested_bank: "",
+  status: "new" as LeadRow["status"],
   notes: "",
 };
 
 export default function AdminLeadsPage() {
-  const [leads, setLeads] = useState<Lead[]>(MOCK_LEADS);
+  const [leads, setLeads] = useState<LeadRow[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [pensionFilter, setPensionFilter] = useState("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const perPage = 8;
 
   const [showModal, setShowModal] = useState(false);
   const [showDetail, setShowDetail] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
-  const [editingLead, setEditingLead] = useState<Lead | null>(null);
-  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
-  const [formData, setFormData] = useState<Omit<Lead, "id" | "createdAt">>(
-    EMPTY_LEAD
-  );
+  const [editingLead, setEditingLead] = useState<LeadRow | null>(null);
+  const [selectedLead, setSelectedLead] = useState<LeadRow | null>(null);
+  const [formData, setFormData] = useState(EMPTY_FORM);
+  const [saving, setSaving] = useState(false);
+
+  const loadLeads = useCallback(async () => {
+    setLoading(true);
+    const data = await fetchLeads({
+      dateFrom: dateFrom || undefined,
+      dateTo: dateTo || undefined,
+    });
+    setLeads(data);
+    setLoading(false);
+  }, [dateFrom, dateTo]);
+
+  useEffect(() => {
+    loadLeads();
+  }, [loadLeads]);
 
   const filtered = useMemo(() => {
     return leads.filter((l) => {
@@ -49,7 +71,7 @@ export default function AdminLeadsPage() {
         l.whatsapp.includes(search);
       const matchStatus = statusFilter === "all" || l.status === statusFilter;
       const matchPension =
-        pensionFilter === "all" || l.pensionType === pensionFilter;
+        pensionFilter === "all" || l.pension_type === pensionFilter;
       return matchSearch && matchStatus && matchPension;
     });
   }, [leads, search, statusFilter, pensionFilter]);
@@ -62,68 +84,126 @@ export default function AdminLeadsPage() {
 
   function openAdd() {
     setEditingLead(null);
-    setFormData(EMPTY_LEAD);
+    setFormData(EMPTY_FORM);
     setShowModal(true);
   }
 
-  function openEdit(lead: Lead) {
+  function openEdit(lead: LeadRow) {
     setEditingLead(lead);
     setFormData({
       name: lead.name,
       whatsapp: lead.whatsapp,
-      pensionType: lead.pensionType,
+      pension_type: lead.pension_type,
       province: lead.province,
-      loanAmount: lead.loanAmount,
-      interestedBank: lead.interestedBank,
+      loan_amount: lead.loan_amount ?? null,
+      interested_bank: lead.interested_bank ?? "",
       status: lead.status,
-      utmSource: lead.utmSource,
-      utmCampaign: lead.utmCampaign,
-      notes: lead.notes,
+      notes: lead.notes ?? "",
     });
     setShowModal(true);
   }
 
-  function openDetail(lead: Lead) {
+  function openDetail(lead: LeadRow) {
     setSelectedLead(lead);
     setShowDetail(true);
   }
 
-  function openDelete(lead: Lead) {
+  function openDelete(lead: LeadRow) {
     setSelectedLead(lead);
     setShowDelete(true);
   }
 
-  function handleSave() {
+  async function handleSave() {
+    setSaving(true);
+
     if (editingLead) {
-      setLeads((prev) =>
-        prev.map((l) =>
-          l.id === editingLead.id ? { ...l, ...formData } : l
-        )
-      );
+      const result = await updateLead(editingLead.id, {
+        name: formData.name,
+        whatsapp: formData.whatsapp,
+        pension_type: formData.pension_type,
+        province: formData.province,
+        loan_amount: formData.loan_amount,
+        interested_bank: formData.interested_bank || null,
+        status: formData.status,
+        notes: formData.notes || null,
+      });
+      setSaving(false);
+      if (result.ok) {
+        setLeads((prev) =>
+          prev.map((l) =>
+            l.id === editingLead.id
+              ? {
+                  ...l,
+                  ...formData,
+                  interested_bank: formData.interested_bank || null,
+                  notes: formData.notes || null,
+                }
+              : l
+          )
+        );
+        setShowModal(false);
+      } else {
+        alert("Gagal menyimpan: " + result.error);
+      }
     } else {
-      const newLead: Lead = {
-        ...formData,
-        id: `lead-${Date.now()}`,
-        createdAt: new Date().toISOString(),
-      };
-      setLeads((prev) => [newLead, ...prev]);
+      const result = await createLead({
+        name: formData.name,
+        whatsapp: formData.whatsapp,
+        pension_type: formData.pension_type,
+        province: formData.province,
+        loan_amount: formData.loan_amount ?? undefined,
+        interested_bank: formData.interested_bank || undefined,
+        status: formData.status,
+        notes: formData.notes || undefined,
+      });
+      setSaving(false);
+      if (result.ok && result.id) {
+        const newLead: LeadRow = {
+          id: result.id,
+          name: formData.name,
+          whatsapp: formData.whatsapp,
+          pension_type: formData.pension_type,
+          province: formData.province,
+          loan_amount: formData.loan_amount ?? null,
+          interested_bank: formData.interested_bank || null,
+          status: formData.status,
+          notes: formData.notes || null,
+          utm_source: null,
+          utm_medium: null,
+          utm_campaign: null,
+          utm_content: null,
+          utm_term: null,
+          ip_address: null,
+          created_at: new Date().toISOString(),
+          deleted_at: null,
+        };
+        setLeads((prev) => [newLead, ...prev]);
+        setShowModal(false);
+      } else {
+        alert("Gagal menambah lead: " + result.error);
+      }
     }
-    setShowModal(false);
   }
 
-  function handleDelete() {
-    if (selectedLead) {
+  async function handleDelete() {
+    if (!selectedLead) return;
+    setSaving(true);
+    const result = await deleteLead(selectedLead.id);
+    setSaving(false);
+    if (result.ok) {
       setLeads((prev) => prev.filter((l) => l.id !== selectedLead.id));
+    } else {
+      alert("Gagal menghapus: " + result.error);
     }
     setShowDelete(false);
   }
 
-  function formatRupiah(n: number) {
+  function formatRupiah(n: number | null) {
     return new Intl.NumberFormat("id-ID", {
       style: "currency",
       currency: "IDR",
       minimumFractionDigits: 0,
-    }).format(n);
+    }).format(n ?? 0);
   }
 
   function formatDate(d: string) {
@@ -134,21 +214,57 @@ export default function AdminLeadsPage() {
     });
   }
 
-  function updateField(
-    field: keyof typeof formData,
-    value: string | number
-  ) {
+  function updateField(field: string, value: string | number | null) {
     setFormData((prev) => ({ ...prev, [field]: value }));
   }
+
+  async function handleExport() {
+    const XLSX = await import("xlsx");
+    const data = filtered.map((l) => ({
+      Nama: l.name,
+      WhatsApp: l.whatsapp,
+      "Jenis Pensiun": l.pension_type,
+      Provinsi: l.province,
+      "Pinjaman (Rp)": l.loan_amount ?? 0,
+      "Bank Diminati": l.interested_bank || "",
+      Status: statusLabel(l.status),
+      Catatan: l.notes || "",
+      Tanggal: formatDate(l.created_at),
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Leads");
+    XLSX.writeFile(wb, `leads-${new Date().toISOString().slice(0, 10)}.xlsx`);
+  }
+
+  const statusLabel = (s: string) =>
+    s === "new"
+      ? "Baru"
+      : s === "contacted"
+        ? "Dihubungi"
+        : s === "processed"
+          ? "Proses"
+          : "Selesai";
 
   return (
     <>
       <div className="page-header">
         <h1>Leads</h1>
-        <button type="button" className="btn btn-primary" onClick={openAdd}>
-          <Plus weight="bold" />
-          Tambah Lead
-        </button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={handleExport}
+            disabled={filtered.length === 0}
+          >
+            <ArrowDown weight="bold" />
+            Export Excel
+          </button>
+          <button type="button" className="btn btn-primary" onClick={openAdd}>
+            <Plus weight="bold" />
+            Tambah Lead
+          </button>
+        </div>
       </div>
 
       <div className="card">
@@ -193,6 +309,31 @@ export default function AdminLeadsPage() {
             <option value="BUMN">BUMN</option>
             <option value="Swasta">Swasta</option>
           </select>
+          <input
+            type="date"
+            className="form-input"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            placeholder="Dari tanggal"
+          />
+          <input
+            type="date"
+            className="form-input"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            placeholder="Sampai tanggal"
+          />
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm"
+            onClick={() => {
+              setDateFrom("");
+              setDateTo("");
+              setCurrentPage(1);
+            }}
+          >
+            Reset
+          </button>
         </div>
 
         <div className="table-wrap">
@@ -210,7 +351,16 @@ export default function AdminLeadsPage() {
               </tr>
             </thead>
             <tbody>
-              {paginated.length === 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan={8}>
+                    <div className="empty-state">
+                      <CircleNotch weight="bold" className="animate-spin" />
+                      <p>Memuat data...</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : paginated.length === 0 ? (
                 <tr>
                   <td colSpan={8}>
                     <div className="empty-state">
@@ -224,22 +374,16 @@ export default function AdminLeadsPage() {
                   <tr key={lead.id}>
                     <td className="table-link">{lead.name}</td>
                     <td className="table-mono">{lead.whatsapp}</td>
-                    <td>{lead.pensionType}</td>
+                    <td>{lead.pension_type}</td>
                     <td>{lead.province}</td>
-                    <td>{formatRupiah(lead.loanAmount)}</td>
+                    <td>{formatRupiah(lead.loan_amount)}</td>
                     <td>
                       <span className={`badge badge-${lead.status}`}>
-                        {lead.status === "new"
-                          ? "Baru"
-                          : lead.status === "contacted"
-                            ? "Dihubungi"
-                            : lead.status === "processed"
-                              ? "Proses"
-                              : "Selesai"}
+                        {statusLabel(lead.status)}
                       </span>
                     </td>
                     <td className="text-muted text-sm">
-                      {formatDate(lead.createdAt)}
+                      {formatDate(lead.created_at)}
                     </td>
                     <td>
                       <div className="table-actions justify-end">
@@ -332,9 +476,9 @@ export default function AdminLeadsPage() {
                   <label className="form-label">Jenis Pensiun</label>
                   <select
                     className="form-select"
-                    value={formData.pensionType}
+                    value={formData.pension_type}
                     onChange={(e) =>
-                      updateField("pensionType", e.target.value)
+                      updateField("pension_type", e.target.value)
                     }
                   >
                     <option value="PNS">PNS</option>
@@ -359,9 +503,9 @@ export default function AdminLeadsPage() {
                   <input
                     type="number"
                     className="form-input"
-                    value={formData.loanAmount}
+                    value={formData.loan_amount ?? ""}
                     onChange={(e) =>
-                      updateField("loanAmount", Number(e.target.value))
+                      updateField("loan_amount", e.target.value ? Number(e.target.value) : null)
                     }
                   />
                 </div>
@@ -370,9 +514,9 @@ export default function AdminLeadsPage() {
                   <input
                     type="text"
                     className="form-input"
-                    value={formData.interestedBank}
+                    value={formData.interested_bank}
                     onChange={(e) =>
-                      updateField("interestedBank", e.target.value)
+                      updateField("interested_bank", e.target.value)
                     }
                   />
                 </div>
@@ -384,10 +528,7 @@ export default function AdminLeadsPage() {
                     className="form-select"
                     value={formData.status}
                     onChange={(e) =>
-                      updateField(
-                        "status",
-                        e.target.value as Lead["status"]
-                      )
+                      updateField("status", e.target.value)
                     }
                   >
                     <option value="new">Baru</option>
@@ -396,26 +537,6 @@ export default function AdminLeadsPage() {
                     <option value="closed">Selesai</option>
                   </select>
                 </div>
-                <div className="form-group">
-                  <label className="form-label">UTM Source</label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    value={formData.utmSource}
-                    onChange={(e) => updateField("utmSource", e.target.value)}
-                  />
-                </div>
-              </div>
-              <div className="form-group">
-                <label className="form-label">UTM Campaign</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  value={formData.utmCampaign}
-                  onChange={(e) =>
-                    updateField("utmCampaign", e.target.value)
-                  }
-                />
               </div>
               <div className="form-group">
                 <label className="form-label">Catatan</label>
@@ -432,6 +553,7 @@ export default function AdminLeadsPage() {
                 type="button"
                 className="btn btn-secondary"
                 onClick={() => setShowModal(false)}
+                disabled={saving}
               >
                 Batal
               </button>
@@ -439,8 +561,15 @@ export default function AdminLeadsPage() {
                 type="button"
                 className="btn btn-primary"
                 onClick={handleSave}
+                disabled={saving}
               >
-                {editingLead ? "Simpan Perubahan" : "Tambah Lead"}
+                {saving ? (
+                  <CircleNotch weight="bold" className="animate-spin" />
+                ) : editingLead ? (
+                  "Simpan Perubahan"
+                ) : (
+                  "Tambah Lead"
+                )}
               </button>
             </div>
           </div>
@@ -478,7 +607,7 @@ export default function AdminLeadsPage() {
                   <div className="text-xs text-muted font-semibold">
                     Jenis Pensiun
                   </div>
-                  <div className="font-bold">{selectedLead.pensionType}</div>
+                  <div className="font-bold">{selectedLead.pension_type}</div>
                 </div>
                 <div>
                   <div className="text-xs text-muted font-semibold">
@@ -491,7 +620,7 @@ export default function AdminLeadsPage() {
                     Pinjaman
                   </div>
                   <div className="font-bold text-accent">
-                    {formatRupiah(selectedLead.loanAmount)}
+                    {formatRupiah(selectedLead.loan_amount)}
                   </div>
                 </div>
                 <div>
@@ -499,7 +628,7 @@ export default function AdminLeadsPage() {
                     Bank Diminati
                   </div>
                   <div className="font-bold">
-                    {selectedLead.interestedBank || "-"}
+                    {selectedLead.interested_bank || "-"}
                   </div>
                 </div>
                 <div>
@@ -507,26 +636,8 @@ export default function AdminLeadsPage() {
                     Status
                   </div>
                   <span className={`badge badge-${selectedLead.status}`}>
-                    {selectedLead.status === "new"
-                      ? "Baru"
-                      : selectedLead.status === "contacted"
-                        ? "Dihubungi"
-                        : selectedLead.status === "processed"
-                          ? "Proses"
-                          : "Selesai"}
+                    {statusLabel(selectedLead.status)}
                   </span>
-                </div>
-                <div>
-                  <div className="text-xs text-muted font-semibold">
-                    UTM Source
-                  </div>
-                  <div>{selectedLead.utmSource || "-"}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-muted font-semibold">
-                    UTM Campaign
-                  </div>
-                  <div>{selectedLead.utmCampaign || "-"}</div>
                 </div>
                 <div>
                   <div className="text-xs text-muted font-semibold">
@@ -538,7 +649,7 @@ export default function AdminLeadsPage() {
                   <div className="text-xs text-muted font-semibold">
                     Tanggal Dibuat
                   </div>
-                  <div>{formatDate(selectedLead.createdAt)}</div>
+                  <div>{formatDate(selectedLead.created_at)}</div>
                 </div>
               </div>
             </div>
@@ -591,6 +702,7 @@ export default function AdminLeadsPage() {
                 type="button"
                 className="btn btn-secondary"
                 onClick={() => setShowDelete(false)}
+                disabled={saving}
               >
                 Batal
               </button>
@@ -598,9 +710,16 @@ export default function AdminLeadsPage() {
                 type="button"
                 className="btn btn-danger"
                 onClick={handleDelete}
+                disabled={saving}
               >
-                <Trash weight="bold" />
-                Hapus
+                {saving ? (
+                  <CircleNotch weight="bold" className="animate-spin" />
+                ) : (
+                  <>
+                    <Trash weight="bold" />
+                    Hapus
+                  </>
+                )}
               </button>
             </div>
           </div>

@@ -1,5 +1,5 @@
 import { Star } from "@phosphor-icons/react/dist/ssr";
-import { TESTIMONIALS, type Testimonial } from "@/lib/constants";
+import type { Testimonial } from "@/lib/types/database";
 
 function TestimonialCard({ item }: { item: Testimonial }) {
   return (
@@ -25,14 +25,16 @@ function TestimonialCard({ item }: { item: Testimonial }) {
       </blockquote>
       <figcaption className="mt-5 border-t border-stone-100 pt-4">
         <p className="font-bold text-navy-900">{item.name}</p>
-        <p className="text-sm text-stone-600">{item.pensionType}</p>
+        {item.pension_type && (
+          <p className="text-sm text-stone-600">{item.pension_type}</p>
+        )}
       </figcaption>
     </figure>
   );
 }
 
-export function Testimonials() {
-  if (TESTIMONIALS.length === 0) return null;
+export function Testimonials({ items }: { items: Testimonial[] }) {
+  if (items.length === 0) return null;
 
   return (
     <section id="testimoni" className="bg-white">
@@ -42,8 +44,8 @@ export function Testimonials() {
         </h2>
 
         <div className="mt-10 flex snap-x snap-mandatory gap-5 overflow-x-auto pb-4 [scrollbar-width:thin]">
-          {TESTIMONIALS.map((item) => (
-            <TestimonialCard key={item.name} item={item} />
+          {items.map((item) => (
+            <TestimonialCard key={item.id} item={item} />
           ))}
         </div>
       </div>

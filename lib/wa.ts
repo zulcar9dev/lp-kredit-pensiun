@@ -1,9 +1,11 @@
 import type { PensionType } from "@/lib/constants";
-import { getAppSettings } from "@/lib/settings";
+import { type AppSettings } from "@/lib/settings";
 import { formatRupiah } from "@/lib/format";
 
-export function buildWaLink(options?: { message?: string }): string {
-  const settings = getAppSettings();
+export function buildWaLink(
+  settings: AppSettings,
+  options?: { message?: string }
+): string {
   const text = options?.message ?? settings.waGreeting;
   return `https://wa.me/${settings.waNumberIntl}?text=${encodeURIComponent(text)}`;
 }

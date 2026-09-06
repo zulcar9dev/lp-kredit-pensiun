@@ -9,12 +9,15 @@ import { LeadFormSection } from "@/components/lead-form-section";
 import { Faq } from "@/components/faq";
 import { SiteFooter } from "@/components/site-footer";
 import { ScrollTracker } from "@/components/scroll-tracker";
-import { FAQS } from "@/lib/constants";
 import { SITE_URL } from "@/lib/site";
 import { getAppSettings } from "@/lib/settings";
+import { fetchLandingData } from "@/lib/fetch-landing";
+import { buildWaLink } from "@/lib/wa";
 
-function StructuredData() {
-  const settings = getAppSettings();
+export const dynamic = "force-dynamic";
+
+async function StructuredData({ faqs }: { faqs: { question: string; answer: string }[] }) {
+  const settings = await getAppSettings();
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
@@ -30,7 +33,7 @@ function StructuredData() {
       {
         "@type": "FAQPage",
         "@id": `${SITE_URL}/#faq`,
-        mainEntity: FAQS.map((faq) => ({
+        mainEntity: faqs.map((faq) => ({
           "@type": "Question",
           name: faq.question,
           acceptedAnswer: {
@@ -50,23 +53,27 @@ function StructuredData() {
   );
 }
 
-export default function Home() {
+export default async function Home() {
+  const { bankProducts, testimonials, faqs } = await fetchLandingData();
+  const settings = await getAppSettings();
+  const waLink = buildWaLink(settings);
+
   return (
     <>
       <SiteHeader />
       <main>
         <Hero />
-        <FloatingWhatsApp />
+        <FloatingWhatsApp waLink={waLink} />
         <Advantages />
-        <BankPartners />
+        <BankPartners products={bankProducts} />
         <HowItWorks />
         <ScrollTracker />
-        <Testimonials />
-        <LeadFormSection />
-        <Faq />
+        <Testimonials items={testimonials} />
+        <LeadFormSection bankProducts={bankProducts} />
+        <Faq items={faqs} />
       </main>
       <SiteFooter />
-      <StructuredData />
+      <StructuredData faqs={faqs} />
     </>
   );
 }

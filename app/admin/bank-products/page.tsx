@@ -1,10 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import {
-  MOCK_BANK_PRODUCTS,
-  type BankProduct,
-} from "@/lib/admin-data";
+import { useState, useEffect, useCallback } from "react";
 import {
   Plus,
   X,
@@ -12,107 +8,170 @@ import {
   Trash,
   ArrowUp,
   ArrowDown,
+  CircleNotch,
 } from "@phosphor-icons/react/dist/ssr";
+import {
+  fetchBankProducts,
+  createBankProduct,
+  updateBankProduct,
+  deleteBankProduct,
+  type BankProductRow,
+} from "@/lib/actions/bank-products";
 
-const EMPTY_FORM: Omit<BankProduct, "id"> = {
-  bankName: "",
-  productName: "",
-  plafonMin: 0,
-  plafonMax: 0,
-  bungaIndikatif: 0,
-  tenorMin: 12,
-  tenorMax: 60,
-  logoUrl: "",
-  displayOrder: 0,
-  isActive: true,
+const EMPTY_FORM = {
+  bank_name: "",
+  product_name: "",
+  plafon_min: 0,
+  plafon_max: 0,
+  bunga_indikatif: 0,
+  tenor_min: 12,
+  tenor_max: 60,
+  notes: "",
+  logo_url: "",
+  display_order: 0,
+  is_active: true,
 };
 
 export default function AdminBankProductsPage() {
-  const [products, setProducts] =
-    useState<BankProduct[]>(MOCK_BANK_PRODUCTS);
+  const [products, setProducts] = useState<BankProductRow[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
-  const [editing, setEditing] = useState<BankProduct | null>(null);
-  const [selected, setSelected] = useState<BankProduct | null>(null);
+  const [editing, setEditing] = useState<BankProductRow | null>(null);
+  const [selected, setSelected] = useState<BankProductRow | null>(null);
   const [formData, setFormData] = useState(EMPTY_FORM);
+  const [saving, setSaving] = useState(false);
+
+  const loadProducts = useCallback(async () => {
+    setLoading(true);
+    const data = await fetchBankProducts();
+    setProducts(data);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    loadProducts();
+  }, [loadProducts]);
 
   function openAdd() {
     setEditing(null);
     setFormData({
       ...EMPTY_FORM,
-      displayOrder: products.length + 1,
+      display_order: products.length + 1,
     });
     setShowModal(true);
   }
 
-  function openEdit(item: BankProduct) {
+  function openEdit(item: BankProductRow) {
     setEditing(item);
     setFormData({
-      bankName: item.bankName,
-      productName: item.productName,
-      plafonMin: item.plafonMin,
-      plafonMax: item.plafonMax,
-      bungaIndikatif: item.bungaIndikatif,
-      tenorMin: item.tenorMin,
-      tenorMax: item.tenorMax,
-      logoUrl: item.logoUrl,
-      displayOrder: item.displayOrder,
-      isActive: item.isActive,
+      bank_name: item.bank_name,
+      product_name: item.product_name ?? "",
+      plafon_min: item.plafon_min ?? 0,
+      plafon_max: item.plafon_max ?? 0,
+      bunga_indikatif: item.bunga_indikatif ?? 0,
+      tenor_min: item.tenor_min ?? 12,
+      tenor_max: item.tenor_max ?? 60,
+      notes: item.notes ?? "",
+      logo_url: item.logo_url ?? "",
+      display_order: item.display_order,
+      is_active: item.is_active,
     });
     setShowModal(true);
   }
 
-  function openDelete(item: BankProduct) {
+  function openDelete(item: BankProductRow) {
     setSelected(item);
     setShowDelete(true);
   }
 
-  function handleSave() {
+  async function handleSave() {
+    setSaving(true);
     if (editing) {
-      setProducts((prev) =>
-        prev.map((p) => (p.id === editing.id ? { ...p, ...formData } : p))
-      );
+      const result = await updateBankProduct(editing.id, {
+        bank_name: formData.bank_name,
+        product_name: formData.product_name || null,
+        plafon_min: formData.plafon_min ?? null,
+        plafon_max: formData.plafon_max ?? null,
+        bunga_indikatif: formData.bunga_indikatif ?? null,
+        tenor_min: formData.tenor_min ?? null,
+        tenor_max: formData.tenor_max ?? null,
+        notes: formData.notes || null,
+        logo_url: formData.logo_url || null,
+        display_order: formData.display_order,
+        is_active: formData.is_active,
+      });
+      setSaving(false);
+      if (result.ok) {
+        loadProducts();
+        setShowModal(false);
+      } else {
+        alert("Gagal menyimpan: " + result.error);
+      }
     } else {
-      const newItem: BankProduct = {
-        ...formData,
-        id: `bp-${Date.now()}`,
-      };
-      setProducts((prev) => [...prev, newItem]);
+      const result = await createBankProduct({
+        bank_name: formData.bank_name,
+        product_name: formData.product_name || null,
+        plafon_min: formData.plafon_min ?? null,
+        plafon_max: formData.plafon_max ?? null,
+        bunga_indikatif: formData.bunga_indikatif ?? null,
+        tenor_min: formData.tenor_min ?? null,
+        tenor_max: formData.tenor_max ?? null,
+        notes: formData.notes || null,
+        logo_url: formData.logo_url || null,
+        display_order: formData.display_order,
+        is_active: formData.is_active,
+      });
+      setSaving(false);
+      if (result.ok) {
+        loadProducts();
+        setShowModal(false);
+      } else {
+        alert("Gagal menyimpan: " + result.error);
+      }
     }
-    setShowModal(false);
   }
 
-  function handleDelete() {
-    if (selected) {
-      setProducts((prev) => prev.filter((p) => p.id !== selected.id));
+  async function handleDelete() {
+    if (!selected) return;
+    setSaving(true);
+    const result = await deleteBankProduct(selected.id);
+    setSaving(false);
+    if (result.ok) {
+      loadProducts();
+    } else {
+      alert("Gagal menghapus: " + result.error);
     }
     setShowDelete(false);
   }
 
-  function moveItem(id: string, direction: "up" | "down") {
-    setProducts((prev) => {
-      const idx = prev.findIndex((p) => p.id === id);
-      if (idx === -1) return prev;
-      const newIdx = direction === "up" ? idx - 1 : idx + 1;
-      if (newIdx < 0 || newIdx >= prev.length) return prev;
-      const updated = [...prev];
-      [updated[idx], updated[newIdx]] = [updated[newIdx], updated[idx]];
-      return updated.map((p, i) => ({ ...p, displayOrder: i + 1 }));
-    });
+  async function moveItem(id: string, direction: "up" | "down") {
+    const idx = products.findIndex((p) => p.id === id);
+    if (idx === -1) return;
+    const newIdx = direction === "up" ? idx - 1 : idx + 1;
+    if (newIdx < 0 || newIdx >= products.length) return;
+
+    const updated = [...products];
+    [updated[idx], updated[newIdx]] = [updated[newIdx], updated[idx]];
+
+    await Promise.all(
+      updated.map((p, i) =>
+        updateBankProduct(p.id, { display_order: i + 1 })
+      )
+    );
+
+    loadProducts();
   }
 
-  function formatRupiah(n: number) {
+  function formatRupiah(n: number | null) {
     return new Intl.NumberFormat("id-ID", {
       style: "currency",
       currency: "IDR",
       minimumFractionDigits: 0,
-    }).format(n);
+    }).format(n ?? 0);
   }
 
-  function updateField(
-    field: keyof typeof formData,
-    value: string | number | boolean
-  ) {
+  function updateField(field: string, value: string | number | boolean) {
     setFormData((prev) => ({ ...prev, [field]: value }));
   }
 
@@ -142,67 +201,101 @@ export default function AdminBankProductsPage() {
               </tr>
             </thead>
             <tbody>
-              {products.map((item, idx) => (
-                <tr key={item.id}>
-                  <td className="text-muted">{idx + 1}</td>
-                  <td className="table-link">{item.bankName}</td>
-                  <td>{item.productName}</td>
-                  <td>
-                    {formatRupiah(item.plafonMin)} -{" "}
-                    {formatRupiah(item.plafonMax)}
-                  </td>
-                  <td>{item.bungaIndikatif}%</td>
-                  <td>
-                    {item.tenorMin}-{item.tenorMax} bln
-                  </td>
-                  <td>
-                    <span
-                      className={`badge badge-${item.isActive ? "active" : "inactive"}`}
-                    >
-                      {item.isActive ? "Aktif" : "Nonaktif"}
-                    </span>
-                  </td>
-                  <td>
-                    <div className="table-actions justify-end">
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-icon btn-sm"
-                        onClick={() => moveItem(item.id, "up")}
-                        disabled={idx === 0}
-                        title="Naik"
-                      >
-                        <ArrowUp weight="bold" />
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-icon btn-sm"
-                        onClick={() => moveItem(item.id, "down")}
-                        disabled={idx === products.length - 1}
-                        title="Turun"
-                      >
-                        <ArrowDown weight="bold" />
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-icon btn-sm"
-                        onClick={() => openEdit(item)}
-                        title="Edit"
-                      >
-                        <PencilSimple weight="bold" />
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-icon btn-sm"
-                        onClick={() => openDelete(item)}
-                        title="Hapus"
-                        style={{ color: "var(--red-500)" }}
-                      >
-                        <Trash weight="bold" />
-                      </button>
+              {loading ? (
+                <tr>
+                  <td colSpan={8}>
+                    <div className="empty-state">
+                      <CircleNotch weight="bold" className="animate-spin" />
+                      <p>Memuat data...</p>
                     </div>
                   </td>
                 </tr>
-              ))}
+              ) : products.length === 0 ? (
+                <tr>
+                  <td colSpan={8}>
+                    <div className="empty-state">
+                      <p>Belum ada produk bank</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                products.map((item, idx) => (
+                  <tr key={item.id}>
+                    <td className="text-muted">{idx + 1}</td>
+                    <td className="table-link">
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        {item.logo_url ? (
+                          <img
+                            src={item.logo_url}
+                            alt={`Logo ${item.bank_name}`}
+                            style={{ width: 32, height: 32, borderRadius: 6, objectFit: "contain", border: "1px solid var(--border)" }}
+                          />
+                        ) : (
+                          <div style={{ width: 32, height: 32, borderRadius: 6, background: "var(--navy-100)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "var(--navy-700)" }}>
+                            {item.bank_name.slice(0, 2).toUpperCase()}
+                          </div>
+                        )}
+                        {item.bank_name}
+                      </div>
+                    </td>
+                    <td>{item.product_name}</td>
+                    <td>
+                      {formatRupiah(item.plafon_min)} -{" "}
+                      {formatRupiah(item.plafon_max)}
+                    </td>
+                    <td>{item.bunga_indikatif}%</td>
+                    <td>
+                      {item.tenor_min}-{item.tenor_max} bln
+                    </td>
+                    <td>
+                      <span
+                        className={`badge badge-${item.is_active ? "active" : "inactive"}`}
+                      >
+                        {item.is_active ? "Aktif" : "Nonaktif"}
+                      </span>
+                    </td>
+                    <td>
+                      <div className="table-actions justify-end">
+                        <button
+                          type="button"
+                          className="btn btn-ghost btn-icon btn-sm"
+                          onClick={() => moveItem(item.id, "up")}
+                          disabled={idx === 0}
+                          title="Naik"
+                        >
+                          <ArrowUp weight="bold" />
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-ghost btn-icon btn-sm"
+                          onClick={() => moveItem(item.id, "down")}
+                          disabled={idx === products.length - 1}
+                          title="Turun"
+                        >
+                          <ArrowDown weight="bold" />
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-ghost btn-icon btn-sm"
+                          onClick={() => openEdit(item)}
+                          title="Edit"
+                        >
+                          <PencilSimple weight="bold" />
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-ghost btn-icon btn-sm"
+                          onClick={() => openDelete(item)}
+                          title="Hapus"
+                          style={{ color: "var(--red-500)" }}
+                        >
+                          <Trash weight="bold" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -228,8 +321,8 @@ export default function AdminBankProductsPage() {
                   <input
                     type="text"
                     className="form-input"
-                    value={formData.bankName}
-                    onChange={(e) => updateField("bankName", e.target.value)}
+                    value={formData.bank_name}
+                    onChange={(e) => updateField("bank_name", e.target.value)}
                   />
                 </div>
                 <div className="form-group">
@@ -237,9 +330,9 @@ export default function AdminBankProductsPage() {
                   <input
                     type="text"
                     className="form-input"
-                    value={formData.productName}
+                    value={formData.product_name}
                     onChange={(e) =>
-                      updateField("productName", e.target.value)
+                      updateField("product_name", e.target.value)
                     }
                   />
                 </div>
@@ -250,9 +343,9 @@ export default function AdminBankProductsPage() {
                   <input
                     type="number"
                     className="form-input"
-                    value={formData.plafonMin}
+                    value={formData.plafon_min}
                     onChange={(e) =>
-                      updateField("plafonMin", Number(e.target.value))
+                      updateField("plafon_min", Number(e.target.value))
                     }
                   />
                 </div>
@@ -261,9 +354,9 @@ export default function AdminBankProductsPage() {
                   <input
                     type="number"
                     className="form-input"
-                    value={formData.plafonMax}
+                    value={formData.plafon_max}
                     onChange={(e) =>
-                      updateField("plafonMax", Number(e.target.value))
+                      updateField("plafon_max", Number(e.target.value))
                     }
                   />
                 </div>
@@ -277,10 +370,10 @@ export default function AdminBankProductsPage() {
                     type="number"
                     step="0.01"
                     className="form-input"
-                    value={formData.bungaIndikatif}
+                    value={formData.bunga_indikatif}
                     onChange={(e) =>
                       updateField(
-                        "bungaIndikatif",
+                        "bunga_indikatif",
                         Number(e.target.value)
                       )
                     }
@@ -291,9 +384,9 @@ export default function AdminBankProductsPage() {
                   <input
                     type="number"
                     className="form-input"
-                    value={formData.displayOrder}
+                    value={formData.display_order}
                     onChange={(e) =>
-                      updateField("displayOrder", Number(e.target.value))
+                      updateField("display_order", Number(e.target.value))
                     }
                   />
                 </div>
@@ -304,9 +397,9 @@ export default function AdminBankProductsPage() {
                   <input
                     type="number"
                     className="form-input"
-                    value={formData.tenorMin}
+                    value={formData.tenor_min}
                     onChange={(e) =>
-                      updateField("tenorMin", Number(e.target.value))
+                      updateField("tenor_min", Number(e.target.value))
                     }
                   />
                 </div>
@@ -315,20 +408,42 @@ export default function AdminBankProductsPage() {
                   <input
                     type="number"
                     className="form-input"
-                    value={formData.tenorMax}
+                    value={formData.tenor_max}
                     onChange={(e) =>
-                      updateField("tenorMax", Number(e.target.value))
+                      updateField("tenor_max", Number(e.target.value))
                     }
                   />
                 </div>
               </div>
               <div className="form-group">
+                <label className="form-label">Catatan</label>
+                <textarea
+                  className="form-textarea"
+                  rows={2}
+                  value={formData.notes}
+                  onChange={(e) => updateField("notes", e.target.value)}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Logo URL (opsional)</label>
+                <input
+                  type="url"
+                  className="form-input"
+                  placeholder="https://contoh.com/logo-bank.png"
+                  value={formData.logo_url}
+                  onChange={(e) => updateField("logo_url", e.target.value)}
+                />
+                <p className="text-xs text-muted" style={{ marginTop: 4 }}>
+                  URL gambar logo bank. Kosongkan jika tidak ada.
+                </p>
+              </div>
+              <div className="form-group">
                 <label className="form-check">
                   <input
                     type="checkbox"
-                    checked={formData.isActive}
+                    checked={formData.is_active}
                     onChange={(e) =>
-                      updateField("isActive", e.target.checked)
+                      updateField("is_active", e.target.checked)
                     }
                   />
                   Aktif
@@ -340,6 +455,7 @@ export default function AdminBankProductsPage() {
                 type="button"
                 className="btn btn-secondary"
                 onClick={() => setShowModal(false)}
+                disabled={saving}
               >
                 Batal
               </button>
@@ -347,8 +463,15 @@ export default function AdminBankProductsPage() {
                 type="button"
                 className="btn btn-primary"
                 onClick={handleSave}
+                disabled={saving}
               >
-                {editing ? "Simpan Perubahan" : "Tambah Produk"}
+                {saving ? (
+                  <CircleNotch weight="bold" className="animate-spin" />
+                ) : editing ? (
+                  "Simpan Perubahan"
+                ) : (
+                  "Tambah Produk"
+                )}
               </button>
             </div>
           </div>
@@ -371,8 +494,8 @@ export default function AdminBankProductsPage() {
             <div className="modal-body">
               <p className="text-sm">
                 Yakin ingin menghapus produk{" "}
-                <strong>{selected.productName}</strong> dari{" "}
-                <strong>{selected.bankName}</strong>?
+                <strong>{selected.product_name}</strong> dari{" "}
+                <strong>{selected.bank_name}</strong>?
               </p>
             </div>
             <div className="modal-footer">
@@ -380,6 +503,7 @@ export default function AdminBankProductsPage() {
                 type="button"
                 className="btn btn-secondary"
                 onClick={() => setShowDelete(false)}
+                disabled={saving}
               >
                 Batal
               </button>
@@ -387,9 +511,16 @@ export default function AdminBankProductsPage() {
                 type="button"
                 className="btn btn-danger"
                 onClick={handleDelete}
+                disabled={saving}
               >
-                <Trash weight="bold" />
-                Hapus
+                {saving ? (
+                  <CircleNotch weight="bold" className="animate-spin" />
+                ) : (
+                  <>
+                    <Trash weight="bold" />
+                    Hapus
+                  </>
+                )}
               </button>
             </div>
           </div>

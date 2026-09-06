@@ -1,21 +1,20 @@
 "use client";
 
 import { WhatsappLogo } from "@phosphor-icons/react/dist/ssr";
-import { buildWaLink } from "@/lib/wa";
 import { trackPixel } from "@/lib/pixel";
 import { CTA_LABEL } from "@/lib/constants";
 
 interface WaButtonProps {
+  waLink: string;
   label?: string;
   size?: "md" | "lg";
-  message?: string;
   className?: string;
 }
 
 export function WaButton({
+  waLink,
   label = CTA_LABEL,
   size = "md",
-  message,
   className = "",
 }: WaButtonProps) {
   const sizeClass =
@@ -25,7 +24,7 @@ export function WaButton({
 
   return (
     <a
-      href={buildWaLink({ message })}
+      href={waLink}
       target="_blank"
       rel="noopener noreferrer"
       onClick={() => trackPixel("Contact", { content_name: "Kredit Pensiun" })}

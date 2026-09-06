@@ -1,10 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import {
-  MOCK_TESTIMONIALS,
-  type Testimonial,
-} from "@/lib/admin-data";
+import { useState, useEffect, useCallback } from "react";
 import {
   Plus,
   X,
@@ -13,99 +9,148 @@ import {
   ArrowUp,
   ArrowDown,
   Star,
+  CircleNotch,
 } from "@phosphor-icons/react/dist/ssr";
+import {
+  fetchTestimonials,
+  createTestimonial,
+  updateTestimonial,
+  deleteTestimonial,
+  type TestimonialRow,
+} from "@/lib/actions/testimonials";
 
-const EMPTY_FORM: Omit<Testimonial, "id"> = {
+const EMPTY_FORM = {
   name: "",
-  pensionType: "PNS",
+  pension_type: "PNS",
   content: "",
-  photoUrl: "",
+  photo_url: "",
   rating: 5,
-  isFeatured: false,
-  displayOrder: 0,
+  is_featured: false,
+  display_order: 0,
 };
 
 export default function AdminTestimonialsPage() {
-  const [testimonials, setTestimonials] =
-    useState<Testimonial[]>(MOCK_TESTIMONIALS);
+  const [testimonials, setTestimonials] = useState<TestimonialRow[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
-  const [editing, setEditing] = useState<Testimonial | null>(null);
-  const [selected, setSelected] = useState<Testimonial | null>(null);
+  const [editing, setEditing] = useState<TestimonialRow | null>(null);
+  const [selected, setSelected] = useState<TestimonialRow | null>(null);
   const [formData, setFormData] = useState(EMPTY_FORM);
+  const [saving, setSaving] = useState(false);
+
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    const data = await fetchTestimonials();
+    setTestimonials(data);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   function openAdd() {
     setEditing(null);
     setFormData({
       ...EMPTY_FORM,
-      displayOrder: testimonials.length + 1,
+      display_order: testimonials.length + 1,
     });
     setShowModal(true);
   }
 
-  function openEdit(item: Testimonial) {
+  function openEdit(item: TestimonialRow) {
     setEditing(item);
     setFormData({
       name: item.name,
-      pensionType: item.pensionType,
+      pension_type: item.pension_type ?? "PNS",
       content: item.content,
-      photoUrl: item.photoUrl,
+      photo_url: item.photo_url ?? "",
       rating: item.rating,
-      isFeatured: item.isFeatured,
-      displayOrder: item.displayOrder,
+      is_featured: item.is_featured,
+      display_order: item.display_order,
     });
     setShowModal(true);
   }
 
-  function openDelete(item: Testimonial) {
+  function openDelete(item: TestimonialRow) {
     setSelected(item);
     setShowDelete(true);
   }
 
-  function handleSave() {
+  async function handleSave() {
+    setSaving(true);
     if (editing) {
-      setTestimonials((prev) =>
-        prev.map((t) =>
-          t.id === editing.id ? { ...t, ...formData } : t
-        )
-      );
+      const result = await updateTestimonial(editing.id, {
+        name: formData.name,
+        pension_type: formData.pension_type,
+        content: formData.content,
+        photo_url: formData.photo_url || null,
+        rating: formData.rating,
+        is_featured: formData.is_featured,
+        display_order: formData.display_order,
+      });
+      setSaving(false);
+      if (result.ok) {
+        loadData();
+        setShowModal(false);
+      } else {
+        alert("Gagal menyimpan: " + result.error);
+      }
     } else {
-      const newItem: Testimonial = {
-        ...formData,
-        id: `t-${Date.now()}`,
-      };
-      setTestimonials((prev) => [...prev, newItem]);
+      const result = await createTestimonial({
+        name: formData.name,
+        pension_type: formData.pension_type,
+        content: formData.content,
+        photo_url: formData.photo_url || null,
+        rating: formData.rating,
+        is_featured: formData.is_featured,
+        display_order: formData.display_order,
+      });
+      setSaving(false);
+      if (result.ok) {
+        loadData();
+        setShowModal(false);
+      } else {
+        alert("Gagal menyimpan: " + result.error);
+      }
     }
-    setShowModal(false);
   }
 
-  function handleDelete() {
-    if (selected) {
-      setTestimonials((prev) =>
-        prev.filter((t) => t.id !== selected.id)
-      );
+  async function handleDelete() {
+    if (!selected) return;
+    setSaving(true);
+    const result = await deleteTestimonial(selected.id);
+    setSaving(false);
+    if (result.ok) {
+      loadData();
+    } else {
+      alert("Gagal menghapus: " + result.error);
     }
     setShowDelete(false);
   }
 
-  function toggleFeatured(id: string) {
-    setTestimonials((prev) =>
-      prev.map((t) =>
-        t.id === id ? { ...t, isFeatured: !t.isFeatured } : t
-      )
-    );
+  async function toggleFeatured(item: TestimonialRow) {
+    await updateTestimonial(item.id, { is_featured: !item.is_featured });
+    loadData();
   }
 
-  function moveItem(id: string, direction: "up" | "down") {
-    setTestimonials((prev) => {
-      const idx = prev.findIndex((t) => t.id === id);
-      if (idx === -1) return prev;
-      const newIdx = direction === "up" ? idx - 1 : idx + 1;
-      if (newIdx < 0 || newIdx >= prev.length) return prev;
-      const updated = [...prev];
-      [updated[idx], updated[newIdx]] = [updated[newIdx], updated[idx]];
-      return updated.map((t, i) => ({ ...t, displayOrder: i + 1 }));
-    });
+  async function moveItem(id: string, direction: "up" | "down") {
+    const idx = testimonials.findIndex((t) => t.id === id);
+    if (idx === -1) return;
+    const newIdx = direction === "up" ? idx - 1 : idx + 1;
+    if (newIdx < 0 || newIdx >= testimonials.length) return;
+
+    const updated = [...testimonials];
+    [updated[idx], updated[newIdx]] = [updated[newIdx], updated[idx]];
+
+    await Promise.all(
+      updated.map((t, i) =>
+        updateTestimonial(t.id, { display_order: i + 1 })
+      )
+    );
+
+    loadData();
   }
 
   function renderStars(rating: number) {
@@ -122,10 +167,7 @@ export default function AdminTestimonialsPage() {
     ));
   }
 
-  function updateField(
-    field: keyof typeof formData,
-    value: string | number | boolean
-  ) {
+  function updateField(field: string, value: string | number | boolean) {
     setFormData((prev) => ({ ...prev, [field]: value }));
   }
 
@@ -154,70 +196,104 @@ export default function AdminTestimonialsPage() {
               </tr>
             </thead>
             <tbody>
-              {testimonials.map((item, idx) => (
-                <tr key={item.id}>
-                  <td className="text-muted">{idx + 1}</td>
-                  <td className="table-link">{item.name}</td>
-                  <td>{item.pensionType}</td>
-                  <td>
-                    <div className="flex items-center gap-2">
-                      {renderStars(item.rating)}
-                    </div>
-                  </td>
-                  <td>
-                    <div className="section-preview">{item.content}</div>
-                  </td>
-                  <td>
-                    <button
-                      type="button"
-                      className={`badge badge-${item.isFeatured ? "active" : "inactive"}`}
-                      onClick={() => toggleFeatured(item.id)}
-                      style={{ cursor: "pointer", border: "none" }}
-                    >
-                      {item.isFeatured ? "Featured" : "Biasa"}
-                    </button>
-                  </td>
-                  <td>
-                    <div className="table-actions justify-end">
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-icon btn-sm"
-                        onClick={() => moveItem(item.id, "up")}
-                        disabled={idx === 0}
-                        title="Naik"
-                      >
-                        <ArrowUp weight="bold" />
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-icon btn-sm"
-                        onClick={() => moveItem(item.id, "down")}
-                        disabled={idx === testimonials.length - 1}
-                        title="Turun"
-                      >
-                        <ArrowDown weight="bold" />
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-icon btn-sm"
-                        onClick={() => openEdit(item)}
-                        title="Edit"
-                      >
-                        <PencilSimple weight="bold" />
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-icon btn-sm"
-                        onClick={() => openDelete(item)}
-                        title="Hapus"
-                        style={{ color: "var(--red-500)" }}
-                      >
-                        <Trash weight="bold" />
-                      </button>
+              {loading ? (
+                <tr>
+                  <td colSpan={7}>
+                    <div className="empty-state">
+                      <CircleNotch weight="bold" className="animate-spin" />
+                      <p>Memuat data...</p>
                     </div>
                   </td>
                 </tr>
-              ))}
+              ) : testimonials.length === 0 ? (
+                <tr>
+                  <td colSpan={7}>
+                    <div className="empty-state">
+                      <p>Belum ada testimoni</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                testimonials.map((item, idx) => (
+                  <tr key={item.id}>
+                    <td className="text-muted">{idx + 1}</td>
+                    <td className="table-link">
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        {item.photo_url ? (
+                          <img
+                            src={item.photo_url}
+                            alt={`Foto ${item.name}`}
+                            style={{ width: 32, height: 32, borderRadius: 9999, objectFit: "cover", border: "1px solid var(--border)" }}
+                          />
+                        ) : (
+                          <div style={{ width: 32, height: 32, borderRadius: 9999, background: "var(--bni-100)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "var(--bni-700)" }}>
+                            {item.name.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                        {item.name}
+                      </div>
+                    </td>
+                    <td>{item.pension_type}</td>
+                    <td>
+                      <div className="flex items-center gap-2">
+                        {renderStars(item.rating)}
+                      </div>
+                    </td>
+                    <td>
+                      <div className="section-preview">{item.content}</div>
+                    </td>
+                    <td>
+                      <button
+                        type="button"
+                        className={`badge badge-${item.is_featured ? "active" : "inactive"}`}
+                        onClick={() => toggleFeatured(item)}
+                        style={{ cursor: "pointer", border: "none" }}
+                      >
+                        {item.is_featured ? "Featured" : "Biasa"}
+                      </button>
+                    </td>
+                    <td>
+                      <div className="table-actions justify-end">
+                        <button
+                          type="button"
+                          className="btn btn-ghost btn-icon btn-sm"
+                          onClick={() => moveItem(item.id, "up")}
+                          disabled={idx === 0}
+                          title="Naik"
+                        >
+                          <ArrowUp weight="bold" />
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-ghost btn-icon btn-sm"
+                          onClick={() => moveItem(item.id, "down")}
+                          disabled={idx === testimonials.length - 1}
+                          title="Turun"
+                        >
+                          <ArrowDown weight="bold" />
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-ghost btn-icon btn-sm"
+                          onClick={() => openEdit(item)}
+                          title="Edit"
+                        >
+                          <PencilSimple weight="bold" />
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-ghost btn-icon btn-sm"
+                          onClick={() => openDelete(item)}
+                          title="Hapus"
+                          style={{ color: "var(--red-500)" }}
+                        >
+                          <Trash weight="bold" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -253,9 +329,9 @@ export default function AdminTestimonialsPage() {
                   <label className="form-label">Jenis Pensiun</label>
                   <select
                     className="form-select"
-                    value={formData.pensionType}
+                    value={formData.pension_type}
                     onChange={(e) =>
-                      updateField("pensionType", e.target.value)
+                      updateField("pension_type", e.target.value)
                     }
                   >
                     <option value="PNS">PNS</option>
@@ -293,20 +369,33 @@ export default function AdminTestimonialsPage() {
                   <input
                     type="number"
                     className="form-input"
-                    value={formData.displayOrder}
+                    value={formData.display_order}
                     onChange={(e) =>
-                      updateField("displayOrder", Number(e.target.value))
+                      updateField("display_order", Number(e.target.value))
                     }
                   />
                 </div>
               </div>
               <div className="form-group">
+                <label className="form-label">Foto URL (opsional)</label>
+                <input
+                  type="url"
+                  className="form-input"
+                  placeholder="https://contoh.com/foto-nasabah.jpg"
+                  value={formData.photo_url}
+                  onChange={(e) => updateField("photo_url", e.target.value)}
+                />
+                <p className="text-xs text-muted" style={{ marginTop: 4 }}>
+                  URL foto nasabah. Kosongkan jika tidak ada.
+                </p>
+              </div>
+              <div className="form-group">
                 <label className="form-check">
                   <input
                     type="checkbox"
-                    checked={formData.isFeatured}
+                    checked={formData.is_featured}
                     onChange={(e) =>
-                      updateField("isFeatured", e.target.checked)
+                      updateField("is_featured", e.target.checked)
                     }
                   />
                   Tampilkan sebagai testimonial unggulan
@@ -318,6 +407,7 @@ export default function AdminTestimonialsPage() {
                 type="button"
                 className="btn btn-secondary"
                 onClick={() => setShowModal(false)}
+                disabled={saving}
               >
                 Batal
               </button>
@@ -325,8 +415,15 @@ export default function AdminTestimonialsPage() {
                 type="button"
                 className="btn btn-primary"
                 onClick={handleSave}
+                disabled={saving}
               >
-                {editing ? "Simpan Perubahan" : "Tambah Testimoni"}
+                {saving ? (
+                  <CircleNotch weight="bold" className="animate-spin" />
+                ) : editing ? (
+                  "Simpan Perubahan"
+                ) : (
+                  "Tambah Testimoni"
+                )}
               </button>
             </div>
           </div>
@@ -357,6 +454,7 @@ export default function AdminTestimonialsPage() {
                 type="button"
                 className="btn btn-secondary"
                 onClick={() => setShowDelete(false)}
+                disabled={saving}
               >
                 Batal
               </button>
@@ -364,9 +462,16 @@ export default function AdminTestimonialsPage() {
                 type="button"
                 className="btn btn-danger"
                 onClick={handleDelete}
+                disabled={saving}
               >
-                <Trash weight="bold" />
-                Hapus
+                {saving ? (
+                  <CircleNotch weight="bold" className="animate-spin" />
+                ) : (
+                  <>
+                    <Trash weight="bold" />
+                    Hapus
+                  </>
+                )}
               </button>
             </div>
           </div>

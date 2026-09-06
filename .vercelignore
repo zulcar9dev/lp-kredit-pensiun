@@ -1,0 +1,5 @@
+functions/
+node_modules/
+.git/
+.env*
+.insforge/

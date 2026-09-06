@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { MOCK_FAQS, type FaqItem } from "@/lib/admin-data";
+import { useState, useEffect, useCallback } from "react";
 import {
   Plus,
   X,
@@ -9,101 +8,140 @@ import {
   Trash,
   ArrowUp,
   ArrowDown,
+  CircleNotch,
 } from "@phosphor-icons/react/dist/ssr";
+import {
+  fetchFaqs,
+  createFaq,
+  updateFaq,
+  deleteFaq,
+  type FaqRow,
+} from "@/lib/actions/faq";
 
-const EMPTY_FORM: Omit<FaqItem, "id"> = {
+const EMPTY_FORM = {
   question: "",
   answer: "",
-  displayOrder: 0,
-  status: "draft",
+  display_order: 0,
+  status: "draft" as FaqRow["status"],
 };
 
 export default function AdminFaqPage() {
-  const [faqs, setFaqs] = useState<FaqItem[]>(MOCK_FAQS);
+  const [faqs, setFaqs] = useState<FaqRow[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
-  const [editing, setEditing] = useState<FaqItem | null>(null);
-  const [selected, setSelected] = useState<FaqItem | null>(null);
+  const [editing, setEditing] = useState<FaqRow | null>(null);
+  const [selected, setSelected] = useState<FaqRow | null>(null);
   const [formData, setFormData] = useState(EMPTY_FORM);
+  const [saving, setSaving] = useState(false);
+
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    const data = await fetchFaqs();
+    setFaqs(data);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   function openAdd() {
     setEditing(null);
     setFormData({
       ...EMPTY_FORM,
-      displayOrder: faqs.length + 1,
+      display_order: faqs.length + 1,
     });
     setShowModal(true);
   }
 
-  function openEdit(item: FaqItem) {
+  function openEdit(item: FaqRow) {
     setEditing(item);
     setFormData({
       question: item.question,
       answer: item.answer,
-      displayOrder: item.displayOrder,
+      display_order: item.display_order,
       status: item.status,
     });
     setShowModal(true);
   }
 
-  function openDelete(item: FaqItem) {
+  function openDelete(item: FaqRow) {
     setSelected(item);
     setShowDelete(true);
   }
 
-  function handleSave() {
+  async function handleSave() {
+    setSaving(true);
     if (editing) {
-      setFaqs((prev) =>
-        prev.map((f) =>
-          f.id === editing.id ? { ...f, ...formData } : f
-        )
-      );
+      const result = await updateFaq(editing.id, {
+        question: formData.question,
+        answer: formData.answer,
+        display_order: formData.display_order,
+        status: formData.status,
+      });
+      setSaving(false);
+      if (result.ok) {
+        loadData();
+        setShowModal(false);
+      } else {
+        alert("Gagal menyimpan: " + result.error);
+      }
     } else {
-      const newItem: FaqItem = {
-        ...formData,
-        id: `f-${Date.now()}`,
-      };
-      setFaqs((prev) => [...prev, newItem]);
+      const result = await createFaq({
+        question: formData.question,
+        answer: formData.answer,
+        display_order: formData.display_order,
+        status: formData.status,
+      });
+      setSaving(false);
+      if (result.ok) {
+        loadData();
+        setShowModal(false);
+      } else {
+        alert("Gagal menyimpan: " + result.error);
+      }
     }
-    setShowModal(false);
   }
 
-  function handleDelete() {
-    if (selected) {
-      setFaqs((prev) => prev.filter((f) => f.id !== selected.id));
+  async function handleDelete() {
+    if (!selected) return;
+    setSaving(true);
+    const result = await deleteFaq(selected.id);
+    setSaving(false);
+    if (result.ok) {
+      loadData();
+    } else {
+      alert("Gagal menghapus: " + result.error);
     }
     setShowDelete(false);
   }
 
-  function toggleStatus(id: string) {
-    setFaqs((prev) =>
-      prev.map((f) =>
-        f.id === id
-          ? {
-              ...f,
-              status: f.status === "published" ? "draft" : "published",
-            }
-          : f
+  async function toggleStatus(item: FaqRow) {
+    const newStatus = item.status === "published" ? "draft" : "published";
+    await updateFaq(item.id, { status: newStatus });
+    loadData();
+  }
+
+  async function moveItem(id: string, direction: "up" | "down") {
+    const idx = faqs.findIndex((f) => f.id === id);
+    if (idx === -1) return;
+    const newIdx = direction === "up" ? idx - 1 : idx + 1;
+    if (newIdx < 0 || newIdx >= faqs.length) return;
+
+    const updated = [...faqs];
+    [updated[idx], updated[newIdx]] = [updated[newIdx], updated[idx]];
+
+    await Promise.all(
+      updated.map((f, i) =>
+        updateFaq(f.id, { display_order: i + 1 })
       )
     );
+
+    loadData();
   }
 
-  function moveItem(id: string, direction: "up" | "down") {
-    setFaqs((prev) => {
-      const idx = prev.findIndex((f) => f.id === id);
-      if (idx === -1) return prev;
-      const newIdx = direction === "up" ? idx - 1 : idx + 1;
-      if (newIdx < 0 || newIdx >= prev.length) return prev;
-      const updated = [...prev];
-      [updated[idx], updated[newIdx]] = [updated[newIdx], updated[idx]];
-      return updated.map((f, i) => ({ ...f, displayOrder: i + 1 }));
-    });
-  }
-
-  function updateField(
-    field: keyof typeof formData,
-    value: string | number
-  ) {
+  function updateField(field: string, value: string | number) {
     setFormData((prev) => ({ ...prev, [field]: value }));
   }
 
@@ -130,66 +168,85 @@ export default function AdminFaqPage() {
               </tr>
             </thead>
             <tbody>
-              {faqs.map((item, idx) => (
-                <tr key={item.id}>
-                  <td className="text-muted">{idx + 1}</td>
-                  <td className="table-link">{item.question}</td>
-                  <td>
-                    <div className="section-preview">{item.answer}</div>
-                  </td>
-                  <td>
-                    <button
-                      type="button"
-                      className={`badge badge-${item.status}`}
-                      onClick={() => toggleStatus(item.id)}
-                      style={{ cursor: "pointer", border: "none" }}
-                    >
-                      {item.status === "published"
-                        ? "Published"
-                        : "Draft"}
-                    </button>
-                  </td>
-                  <td>
-                    <div className="table-actions justify-end">
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-icon btn-sm"
-                        onClick={() => moveItem(item.id, "up")}
-                        disabled={idx === 0}
-                        title="Naik"
-                      >
-                        <ArrowUp weight="bold" />
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-icon btn-sm"
-                        onClick={() => moveItem(item.id, "down")}
-                        disabled={idx === faqs.length - 1}
-                        title="Turun"
-                      >
-                        <ArrowDown weight="bold" />
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-icon btn-sm"
-                        onClick={() => openEdit(item)}
-                        title="Edit"
-                      >
-                        <PencilSimple weight="bold" />
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-icon btn-sm"
-                        onClick={() => openDelete(item)}
-                        title="Hapus"
-                        style={{ color: "var(--red-500)" }}
-                      >
-                        <Trash weight="bold" />
-                      </button>
+              {loading ? (
+                <tr>
+                  <td colSpan={5}>
+                    <div className="empty-state">
+                      <CircleNotch weight="bold" className="animate-spin" />
+                      <p>Memuat data...</p>
                     </div>
                   </td>
                 </tr>
-              ))}
+              ) : faqs.length === 0 ? (
+                <tr>
+                  <td colSpan={5}>
+                    <div className="empty-state">
+                      <p>Belum ada FAQ</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                faqs.map((item, idx) => (
+                  <tr key={item.id}>
+                    <td className="text-muted">{idx + 1}</td>
+                    <td className="table-link">{item.question}</td>
+                    <td>
+                      <div className="section-preview">{item.answer}</div>
+                    </td>
+                    <td>
+                      <button
+                        type="button"
+                        className={`badge badge-${item.status}`}
+                        onClick={() => toggleStatus(item)}
+                        style={{ cursor: "pointer", border: "none" }}
+                      >
+                        {item.status === "published"
+                          ? "Published"
+                          : "Draft"}
+                      </button>
+                    </td>
+                    <td>
+                      <div className="table-actions justify-end">
+                        <button
+                          type="button"
+                          className="btn btn-ghost btn-icon btn-sm"
+                          onClick={() => moveItem(item.id, "up")}
+                          disabled={idx === 0}
+                          title="Naik"
+                        >
+                          <ArrowUp weight="bold" />
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-ghost btn-icon btn-sm"
+                          onClick={() => moveItem(item.id, "down")}
+                          disabled={idx === faqs.length - 1}
+                          title="Turun"
+                        >
+                          <ArrowDown weight="bold" />
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-ghost btn-icon btn-sm"
+                          onClick={() => openEdit(item)}
+                          title="Edit"
+                        >
+                          <PencilSimple weight="bold" />
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-ghost btn-icon btn-sm"
+                          onClick={() => openDelete(item)}
+                          title="Hapus"
+                          style={{ color: "var(--red-500)" }}
+                        >
+                          <Trash weight="bold" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -238,7 +295,7 @@ export default function AdminFaqPage() {
                     onChange={(e) =>
                       updateField(
                         "status",
-                        e.target.value as "published" | "draft"
+                        e.target.value
                       )
                     }
                   >
@@ -251,9 +308,9 @@ export default function AdminFaqPage() {
                   <input
                     type="number"
                     className="form-input"
-                    value={formData.displayOrder}
+                    value={formData.display_order}
                     onChange={(e) =>
-                      updateField("displayOrder", Number(e.target.value))
+                      updateField("display_order", Number(e.target.value))
                     }
                   />
                 </div>
@@ -264,6 +321,7 @@ export default function AdminFaqPage() {
                 type="button"
                 className="btn btn-secondary"
                 onClick={() => setShowModal(false)}
+                disabled={saving}
               >
                 Batal
               </button>
@@ -271,8 +329,15 @@ export default function AdminFaqPage() {
                 type="button"
                 className="btn btn-primary"
                 onClick={handleSave}
+                disabled={saving}
               >
-                {editing ? "Simpan Perubahan" : "Tambah FAQ"}
+                {saving ? (
+                  <CircleNotch weight="bold" className="animate-spin" />
+                ) : editing ? (
+                  "Simpan Perubahan"
+                ) : (
+                  "Tambah FAQ"
+                )}
               </button>
             </div>
           </div>
@@ -303,6 +368,7 @@ export default function AdminFaqPage() {
                 type="button"
                 className="btn btn-secondary"
                 onClick={() => setShowDelete(false)}
+                disabled={saving}
               >
                 Batal
               </button>
@@ -310,9 +376,16 @@ export default function AdminFaqPage() {
                 type="button"
                 className="btn btn-danger"
                 onClick={handleDelete}
+                disabled={saving}
               >
-                <Trash weight="bold" />
-                Hapus
+                {saving ? (
+                  <CircleNotch weight="bold" className="animate-spin" />
+                ) : (
+                  <>
+                    <Trash weight="bold" />
+                    Hapus
+                  </>
+                )}
               </button>
             </div>
           </div>

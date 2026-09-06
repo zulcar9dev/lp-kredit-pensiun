@@ -3,7 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { WaButton } from "@/components/wa-button";
 
-export function FloatingWhatsApp() {
+interface FloatingWhatsAppProps {
+  waLink: string;
+}
+
+export function FloatingWhatsApp({ waLink }: FloatingWhatsAppProps) {
   const [visible, setVisible] = useState(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
@@ -35,7 +39,7 @@ export function FloatingWhatsApp() {
             : "pointer-events-none translate-y-3 opacity-0"
         }`}
       >
-        <WaButton size="lg" className="shadow-card-lg" />
+        <WaButton waLink={waLink} size="lg" className="shadow-card-lg" />
       </div>
     </>
   );

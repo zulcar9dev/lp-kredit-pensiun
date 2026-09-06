@@ -1,32 +1,79 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
-  MOCK_SETTINGS,
-  type AppSetting,
-} from "@/lib/admin-data";
-import { CheckCircle, WarningCircle } from "@phosphor-icons/react/dist/ssr";
+  CheckCircle,
+  CircleNotch,
+} from "@phosphor-icons/react/dist/ssr";
+import {
+  fetchSettings,
+  upsertSetting,
+  type SettingRow,
+} from "@/lib/actions/settings";
 
 export default function AdminSettingsPage() {
-  const [settings, setSettings] = useState<AppSetting[]>(MOCK_SETTINGS);
+  const [settings, setSettings] = useState<SettingRow[]>([]);
+  const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const loadSettings = useCallback(async () => {
+    setLoading(true);
+    const data = await fetchSettings();
+    setSettings(data);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    loadSettings();
+  }, [loadSettings]);
 
   function getSetting(key: string) {
-    return settings.find((s) => s.settingKey === key)?.settingValue || "";
+    return settings.find((s) => s.setting_key === key)?.setting_value || "";
   }
 
-  function updateSetting(key: string, value: string) {
-    setSettings((prev) =>
-      prev.map((s) =>
-        s.settingKey === key ? { ...s, settingValue: value } : s
-      )
-    );
+  function updateLocal(key: string, value: string) {
+    setSettings((prev) => {
+      const existing = prev.find((s) => s.setting_key === key);
+      if (existing) {
+        return prev.map((s) =>
+          s.setting_key === key ? { ...s, setting_value: value } : s
+        );
+      }
+      return [...prev, { id: "", setting_key: key, setting_value: value }];
+    });
     setSaved(false);
   }
 
-  function handleSave() {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+  async function handleSave() {
+    setSaving(true);
+    const keys = ["site_title", "wa_number", "wa_number_display", "wa_greeting"];
+    const results = await Promise.all(
+      keys.map((key) => upsertSetting(key, getSetting(key)))
+    );
+    setSaving(false);
+    if (results.every((r) => r.ok)) {
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } else {
+      alert("Gagal menyimpan pengaturan");
+    }
+  }
+
+  if (loading) {
+    return (
+      <>
+        <div className="page-header">
+          <h1>Pengaturan</h1>
+        </div>
+        <div className="card">
+          <div className="empty-state">
+            <CircleNotch weight="bold" className="animate-spin" />
+            <p>Memuat pengaturan...</p>
+          </div>
+        </div>
+      </>
+    );
   }
 
   return (
@@ -56,7 +103,7 @@ export default function AdminSettingsPage() {
             type="text"
             className="form-input"
             value={getSetting("site_title")}
-            onChange={(e) => updateSetting("site_title", e.target.value)}
+            onChange={(e) => updateLocal("site_title", e.target.value)}
           />
         </div>
 
@@ -73,10 +120,30 @@ export default function AdminSettingsPage() {
             className="form-input"
             placeholder="082189902246"
             value={getSetting("wa_number")}
-            onChange={(e) => updateSetting("wa_number", e.target.value)}
+            onChange={(e) => updateLocal("wa_number", e.target.value)}
           />
           <div className="form-hint">
             Nomor ini digunakan untuk tombol WhatsApp di landing page.
+          </div>
+        </div>
+
+        <div className="form-group">
+          <label className="form-label">
+            Format Tampilan Nomor WhatsApp
+            <span className="form-label-hint">
+              {" "}
+              — yang ditampilkan di halaman
+            </span>
+          </label>
+          <input
+            type="text"
+            className="form-input"
+            placeholder="0821-8990-2246"
+            value={getSetting("wa_number_display")}
+            onChange={(e) => updateLocal("wa_number_display", e.target.value)}
+          />
+          <div className="form-hint">
+            Format nomor yang ditampilkan ke pengunjung (contoh: 0821-8990-2246). Kosongkan untuk format default.
           </div>
         </div>
 
@@ -92,7 +159,7 @@ export default function AdminSettingsPage() {
             className="form-textarea"
             rows={3}
             value={getSetting("wa_greeting")}
-            onChange={(e) => updateSetting("wa_greeting", e.target.value)}
+            onChange={(e) => updateLocal("wa_greeting", e.target.value)}
           />
         </div>
 
@@ -101,8 +168,13 @@ export default function AdminSettingsPage() {
             type="button"
             className="btn btn-primary"
             onClick={handleSave}
+            disabled={saving}
           >
-            Simpan Pengaturan
+            {saving ? (
+              <CircleNotch weight="bold" className="animate-spin" />
+            ) : (
+              "Simpan Pengaturan"
+            )}
           </button>
         </div>
       </div>
@@ -122,22 +194,15 @@ export default function AdminSettingsPage() {
               Backend
             </div>
             <div className="font-bold">
-              InsForge (belum terintegrasi)
+              InsForge (terintegrasi)
             </div>
           </div>
           <div>
             <div className="text-xs text-muted font-semibold">
               Data
             </div>
-            <div className="font-bold">Mock data (localStorage)</div>
+            <div className="font-bold">Database PostgreSQL (InsForge)</div>
           </div>
-        </div>
-
-        <div className="note note-warn mt-4">
-          <WarningCircle weight="bold" />
-          Saat ini semua data bersifat simulasi dan akan ter-reset setiap
-          halaman di-refresh. Integrasi backend InsForge akan dilakukan di
-          phase selanjutnya.
         </div>
       </div>
     </>

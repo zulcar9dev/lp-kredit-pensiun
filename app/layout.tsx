@@ -12,40 +12,42 @@ const jakarta = Plus_Jakarta_Sans({
   variable: "--font-jakarta",
 });
 
-const settings = getAppSettings();
-const pageTitle = `${settings.siteTitle} | Tinggal Chat, Saya Urus Sampai Cair`;
-const pageDescription =
-  "Pendampingan pengajuan kredit pensiun untuk pensiunan TNI/Polri, PNS, BUMN, dan swasta. Konsultasi gratis via WhatsApp, ada pilihan produk dari beberapa bank mitra.";
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getAppSettings();
+  const pageTitle = `${settings.siteTitle} | Tinggal Chat, Saya Urus Sampai Cair`;
+  const pageDescription =
+    "Pendampingan pengajuan kredit pensiun untuk pensiunan TNI/Polri, PNS, BUMN, dan swasta. Konsultasi gratis via WhatsApp, ada pilihan produk dari beberapa bank mitra.";
 
-export const metadata: Metadata = {
-  metadataBase: new URL(SITE_URL),
-  title: {
-    default: pageTitle,
-    template: `%s | ${settings.siteTitle}`,
-  },
-  description: pageDescription,
-  alternates: {
-    canonical: "/",
-  },
-  openGraph: {
-    type: "website",
-    locale: "id_ID",
-    url: "/",
-    siteName: settings.siteTitle,
-    title: pageTitle,
+  return {
+    metadataBase: new URL(SITE_URL),
+    title: {
+      default: pageTitle,
+      template: `%s | ${settings.siteTitle}`,
+    },
     description: pageDescription,
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: pageTitle,
-    description:
-      "Konsultasi gratis via WhatsApp, ada pilihan produk dari beberapa bank mitra.",
-  },
-  robots: {
-    index: true,
-    follow: true,
-  },
-};
+    alternates: {
+      canonical: "/",
+    },
+    openGraph: {
+      type: "website",
+      locale: "id_ID",
+      url: "/",
+      siteName: settings.siteTitle,
+      title: pageTitle,
+      description: pageDescription,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: pageTitle,
+      description:
+        "Konsultasi gratis via WhatsApp, ada pilihan produk dari beberapa bank mitra.",
+    },
+    robots: {
+      index: true,
+      follow: true,
+    },
+  };
+}
 
 export const viewport: Viewport = {
   themeColor: "#FAFAF9",

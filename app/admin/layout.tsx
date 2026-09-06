@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   House,
   User,
@@ -14,13 +14,16 @@ import {
   List,
   X,
   SignOut,
+  Megaphone,
 } from "@phosphor-icons/react/dist/ssr";
+import { signOut } from "@/app/actions/auth";
 import "./globals.css";
 
 const NAV_ITEMS = [
   { href: "/admin", label: "Dashboard", icon: House },
   { href: "/admin/leads", label: "Leads", icon: User },
   { href: "/admin/bank-products", label: "Bank & Produk", icon: Bank },
+  { href: "/admin/campaigns", label: "Campaigns", icon: Megaphone },
   { href: "/admin/sections", label: "Sections", icon: ListChecks },
   { href: "/admin/testimonials", label: "Testimoni", icon: Star },
   { href: "/admin/faq", label: "FAQ", icon: Question },
@@ -33,15 +36,12 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const isLoginPage = pathname === "/admin/login";
 
-  function handleLogout() {
-    document.cookie =
-      "admin_session=; path=/admin; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    router.push("/admin/login");
+  async function handleLogout() {
+    await signOut();
   }
 
   if (isLoginPage) {
