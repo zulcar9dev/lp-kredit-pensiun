@@ -26,6 +26,33 @@ export async function submitLead(payload: LeadPayload): Promise<SubmitResult> {
     });
 
     if (error) {
+      console.error("submit-lead error:", error);
+      const code = (error as { error?: string }).error;
+      const status = (error as { statusCode?: number }).statusCode;
+      if (
+        code === "NETWORK_ERROR" ||
+        status === 0 ||
+        error.message?.includes("Failed to fetch")
+      ) {
+        return {
+          ok: false,
+          message:
+            "Koneksi internet tidak stabil. Periksa jaringan lalu coba lagi.",
+        };
+      }
+      if (code === "REQUEST_TIMEOUT" || status === 408) {
+        return {
+          ok: false,
+          message: "Server sedang sibuk. Mohon coba beberapa saat lagi.",
+        };
+      }
+      if (status === 429) {
+        return {
+          ok: false,
+          message:
+            "Terlalu banyak permintaan. Tunggu sebentar lalu coba lagi.",
+        };
+      }
       return {
         ok: false,
         message: error.message || "Gagal mengirim data. Silakan coba lagi.",
@@ -40,7 +67,8 @@ export async function submitLead(payload: LeadPayload): Promise<SubmitResult> {
     }
 
     return { ok: true };
-  } catch {
+  } catch (err) {
+    console.error("submit-lead unexpected:", err);
     return {
       ok: false,
       message: "Terjadi kesalahan. Silakan coba lagi.",
