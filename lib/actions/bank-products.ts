@@ -1,11 +1,13 @@
 "use server";
 
 import { getInsforgeAdmin } from "@/lib/insforge";
+import { requireAdmin } from "@/lib/admin-auth";
 import type { BankProduct } from "@/lib/types/database";
 
 export type BankProductRow = Omit<BankProduct, "created_at" | "updated_at">;
 
 export async function fetchBankProducts(): Promise<BankProductRow[]> {
+  await requireAdmin();
   const { data, error } = await getInsforgeAdmin().database
     .from("bank_products")
     .select("*")
@@ -22,6 +24,7 @@ export async function fetchBankProducts(): Promise<BankProductRow[]> {
 export async function createBankProduct(
   payload: Omit<BankProduct, "id" | "created_at" | "updated_at">
 ): Promise<{ ok: boolean; id?: string; error?: string }> {
+  await requireAdmin();
   const { data, error } = await getInsforgeAdmin().database
     .from("bank_products")
     .insert([payload])
@@ -38,6 +41,7 @@ export async function updateBankProduct(
   id: string,
   payload: Partial<Omit<BankProduct, "id" | "created_at" | "updated_at">>
 ): Promise<{ ok: boolean; error?: string }> {
+  await requireAdmin();
   const { error } = await getInsforgeAdmin().database
     .from("bank_products")
     .update(payload)
@@ -52,6 +56,7 @@ export async function updateBankProduct(
 export async function deleteBankProduct(
   id: string
 ): Promise<{ ok: boolean; error?: string }> {
+  await requireAdmin();
   const { error } = await getInsforgeAdmin().database
     .from("bank_products")
     .delete()

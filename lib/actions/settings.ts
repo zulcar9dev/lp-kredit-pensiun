@@ -1,11 +1,13 @@
 "use server";
 
 import { getInsforgeAdmin } from "@/lib/insforge";
+import { requireAdmin } from "@/lib/admin-auth";
 import type { AppSetting } from "@/lib/types/database";
 
 export type SettingRow = Omit<AppSetting, "updated_at">;
 
 export async function fetchSettings(): Promise<SettingRow[]> {
+  await requireAdmin();
   const { data, error } = await getInsforgeAdmin().database
     .from("app_settings")
     .select("*");
@@ -22,6 +24,7 @@ export async function upsertSetting(
   key: string,
   value: string
 ): Promise<{ ok: boolean; error?: string }> {
+  await requireAdmin();
   const { error } = await getInsforgeAdmin().database
     .from("app_settings")
     .upsert(

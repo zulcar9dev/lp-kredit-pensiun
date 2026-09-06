@@ -1,11 +1,13 @@
 "use server";
 
 import { getInsforgeAdmin } from "@/lib/insforge";
+import { requireAdmin } from "@/lib/admin-auth";
 import type { Testimonial } from "@/lib/types/database";
 
 export type TestimonialRow = Omit<Testimonial, "created_at">;
 
 export async function fetchTestimonials(): Promise<TestimonialRow[]> {
+  await requireAdmin();
   const { data, error } = await getInsforgeAdmin().database
     .from("testimonials")
     .select("*")
@@ -22,6 +24,7 @@ export async function fetchTestimonials(): Promise<TestimonialRow[]> {
 export async function createTestimonial(
   payload: Omit<Testimonial, "id" | "created_at">
 ): Promise<{ ok: boolean; id?: string; error?: string }> {
+  await requireAdmin();
   const { data, error } = await getInsforgeAdmin().database
     .from("testimonials")
     .insert([payload])
@@ -38,6 +41,7 @@ export async function updateTestimonial(
   id: string,
   payload: Partial<Omit<Testimonial, "id" | "created_at">>
 ): Promise<{ ok: boolean; error?: string }> {
+  await requireAdmin();
   const { error } = await getInsforgeAdmin().database
     .from("testimonials")
     .update(payload)
@@ -52,6 +56,7 @@ export async function updateTestimonial(
 export async function deleteTestimonial(
   id: string
 ): Promise<{ ok: boolean; error?: string }> {
+  await requireAdmin();
   const { error } = await getInsforgeAdmin().database
     .from("testimonials")
     .delete()

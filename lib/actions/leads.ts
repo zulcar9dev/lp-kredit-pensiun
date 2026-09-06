@@ -1,6 +1,7 @@
 "use server";
 
 import { getInsforgeAdmin } from "@/lib/insforge";
+import { requireAdmin } from "@/lib/admin-auth";
 import type { Lead } from "@/lib/types/database";
 
 export type LeadRow = Omit<Lead, "created_at" | "updated_at"> & {
@@ -12,6 +13,7 @@ export async function fetchLeads(filters?: {
   dateFrom?: string;
   dateTo?: string;
 }): Promise<LeadRow[]> {
+  await requireAdmin();
   let query = getInsforgeAdmin().database
     .from("leads")
     .select("*")
@@ -39,6 +41,7 @@ export async function updateLeadStatus(
   id: string,
   status: Lead["status"]
 ): Promise<{ ok: boolean; error?: string }> {
+  await requireAdmin();
   const { error } = await getInsforgeAdmin().database
     .from("leads")
     .update({ status })
@@ -55,6 +58,7 @@ export async function updateLead(
   id: string,
   payload: Partial<Pick<Lead, "name" | "whatsapp" | "pension_type" | "province" | "loan_amount" | "interested_bank" | "status" | "notes">>
 ): Promise<{ ok: boolean; error?: string }> {
+  await requireAdmin();
   const { error } = await getInsforgeAdmin().database
     .from("leads")
     .update(payload)
@@ -71,6 +75,7 @@ export async function createLead(
   payload: Pick<Lead, "name" | "whatsapp" | "pension_type" | "province"> &
     Partial<Pick<Lead, "loan_amount" | "interested_bank" | "notes" | "status">>
 ): Promise<{ ok: boolean; error?: string; id?: string }> {
+  await requireAdmin();
   const { data, error } = await getInsforgeAdmin().database
     .from("leads")
     .insert([
@@ -97,6 +102,7 @@ export async function createLead(
 export async function deleteLead(
   id: string
 ): Promise<{ ok: boolean; error?: string }> {
+  await requireAdmin();
   const { error } = await getInsforgeAdmin().database
     .from("leads")
     .update({ deleted_at: new Date().toISOString() })

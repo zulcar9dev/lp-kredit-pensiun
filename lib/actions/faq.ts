@@ -1,11 +1,13 @@
 "use server";
 
 import { getInsforgeAdmin } from "@/lib/insforge";
+import { requireAdmin } from "@/lib/admin-auth";
 import type { Faq } from "@/lib/types/database";
 
 export type FaqRow = Omit<Faq, "created_at">;
 
 export async function fetchFaqs(): Promise<FaqRow[]> {
+  await requireAdmin();
   const { data, error } = await getInsforgeAdmin().database
     .from("faq")
     .select("*")
@@ -22,6 +24,7 @@ export async function fetchFaqs(): Promise<FaqRow[]> {
 export async function createFaq(
   payload: Omit<Faq, "id" | "created_at">
 ): Promise<{ ok: boolean; id?: string; error?: string }> {
+  await requireAdmin();
   const { data, error } = await getInsforgeAdmin().database
     .from("faq")
     .insert([payload])
@@ -38,6 +41,7 @@ export async function updateFaq(
   id: string,
   payload: Partial<Omit<Faq, "id" | "created_at">>
 ): Promise<{ ok: boolean; error?: string }> {
+  await requireAdmin();
   const { error } = await getInsforgeAdmin().database
     .from("faq")
     .update(payload)
@@ -52,6 +56,7 @@ export async function updateFaq(
 export async function deleteFaq(
   id: string
 ): Promise<{ ok: boolean; error?: string }> {
+  await requireAdmin();
   const { error } = await getInsforgeAdmin().database
     .from("faq")
     .delete()

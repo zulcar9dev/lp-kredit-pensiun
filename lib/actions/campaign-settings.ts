@@ -1,11 +1,13 @@
 "use server";
 
 import { getInsforgeAdmin } from "@/lib/insforge";
+import { requireAdmin } from "@/lib/admin-auth";
 import type { CampaignSetting } from "@/lib/types/database";
 
 export type CampaignSettingRow = CampaignSetting;
 
 export async function fetchCampaignSettings(): Promise<CampaignSettingRow[]> {
+  await requireAdmin();
   const { data, error } = await getInsforgeAdmin().database
     .from("campaign_settings")
     .select("*")
@@ -22,6 +24,7 @@ export async function fetchCampaignSettings(): Promise<CampaignSettingRow[]> {
 export async function createCampaignSetting(
   setting: Omit<CampaignSetting, "id" | "created_at">
 ): Promise<{ ok: boolean; error?: string }> {
+  await requireAdmin();
   const { error } = await getInsforgeAdmin().database
     .from("campaign_settings")
     .insert([setting]);
@@ -36,6 +39,7 @@ export async function updateCampaignSetting(
   id: string,
   setting: Partial<Omit<CampaignSetting, "id" | "created_at">>
 ): Promise<{ ok: boolean; error?: string }> {
+  await requireAdmin();
   const { error } = await getInsforgeAdmin().database
     .from("campaign_settings")
     .update(setting)
@@ -50,6 +54,7 @@ export async function updateCampaignSetting(
 export async function deleteCampaignSetting(
   id: string
 ): Promise<{ ok: boolean; error?: string }> {
+  await requireAdmin();
   const { error } = await getInsforgeAdmin().database
     .from("campaign_settings")
     .delete()

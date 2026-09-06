@@ -4,7 +4,7 @@ import {
   WA_NUMBER_DISPLAY,
   WA_PREFILLED_MESSAGE,
 } from "@/lib/constants";
-import { fetchSettings } from "@/lib/actions/settings";
+import { getInsforgeAdmin } from "@/lib/insforge";
 
 export interface AppSettings {
   siteTitle: string;
@@ -14,7 +14,15 @@ export interface AppSettings {
 }
 
 export async function getAppSettings(): Promise<AppSettings> {
-  const settings = await fetchSettings();
+  const { data, error } = await getInsforgeAdmin().database
+    .from("app_settings")
+    .select("*");
+
+  if (error) {
+    console.error("getAppSettings error:", error);
+  }
+
+  const settings = data ?? [];
 
   function getSetting(key: string, fallback: string) {
     return settings.find((s) => s.setting_key === key)?.setting_value || fallback;

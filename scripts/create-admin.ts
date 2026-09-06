@@ -1,8 +1,10 @@
-import { createClient } from "@insforge/sdk";
+import { createAdminClient } from "@insforge/sdk";
 
-const insforge = createClient({
-  baseUrl: process.env.NEXT_PUBLIC_INSFORGE_URL!,
-  anonKey: process.env.NEXT_PUBLIC_INSFORGE_ANON_KEY!,
+// Menggunakan service key (INSFORGE_API_KEY), bukan anon key, supaya admin
+// tetap bisa dibuat walaupun signup publik dinonaktifkan.
+const insforge = createAdminClient({
+  baseUrl: process.env.INSFORGE_URL || process.env.NEXT_PUBLIC_INSFORGE_URL!,
+  apiKey: process.env.INSFORGE_API_KEY!,
 });
 
 const email = process.env.ADMIN_EMAIL || "admin@kreditpensiun.com";
@@ -14,6 +16,11 @@ if (!rawPassword) {
     "ADMIN_PASSWORD env var is required. Example:\n" +
       'ADMIN_PASSWORD="your-secret-password" npx tsx scripts/create-admin.ts'
   );
+  process.exit(1);
+}
+
+if (!process.env.INSFORGE_API_KEY) {
+  console.error("INSFORGE_API_KEY env var is required (service key).");
   process.exit(1);
 }
 

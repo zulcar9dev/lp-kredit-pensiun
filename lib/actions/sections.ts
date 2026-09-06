@@ -1,11 +1,13 @@
 "use server";
 
 import { getInsforgeAdmin } from "@/lib/insforge";
+import { requireAdmin } from "@/lib/admin-auth";
 import type { Section } from "@/lib/types/database";
 
 export type SectionRow = Omit<Section, "created_at" | "updated_at">;
 
 export async function fetchSections(): Promise<SectionRow[]> {
+  await requireAdmin();
   const { data, error } = await getInsforgeAdmin().database
     .from("sections")
     .select("*")
@@ -22,6 +24,7 @@ export async function fetchSections(): Promise<SectionRow[]> {
 export async function createSection(
   payload: Omit<Section, "id" | "created_at" | "updated_at">
 ): Promise<{ ok: boolean; id?: string; error?: string }> {
+  await requireAdmin();
   const { data, error } = await getInsforgeAdmin().database
     .from("sections")
     .insert([payload])
@@ -38,6 +41,7 @@ export async function updateSection(
   id: string,
   payload: Partial<Omit<Section, "id" | "created_at" | "updated_at">>
 ): Promise<{ ok: boolean; error?: string }> {
+  await requireAdmin();
   const { error } = await getInsforgeAdmin().database
     .from("sections")
     .update(payload)
@@ -52,6 +56,7 @@ export async function updateSection(
 export async function deleteSection(
   id: string
 ): Promise<{ ok: boolean; error?: string }> {
+  await requireAdmin();
   const { error } = await getInsforgeAdmin().database
     .from("sections")
     .delete()
