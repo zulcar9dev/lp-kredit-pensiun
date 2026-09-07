@@ -42,9 +42,14 @@ export default function AdminCampaignsPage() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const data = await fetchCampaignSettings();
-    setCampaigns(data);
-    setLoading(false);
+    try {
+      const data = await fetchCampaignSettings();
+      setCampaigns(data);
+    } catch (err) {
+      console.error("Gagal memuat campaigns:", err);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {

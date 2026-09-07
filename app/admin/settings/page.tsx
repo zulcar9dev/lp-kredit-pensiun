@@ -19,9 +19,14 @@ export default function AdminSettingsPage() {
 
   const loadSettings = useCallback(async () => {
     setLoading(true);
-    const data = await fetchSettings();
-    setSettings(data);
-    setLoading(false);
+    try {
+      const data = await fetchSettings();
+      setSettings(data);
+    } catch (err) {
+      console.error("Gagal memuat pengaturan:", err);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {

@@ -37,9 +37,14 @@ export default function AdminFaqPage() {
 
   const loadData = useCallback(async () => {
     setLoading(true);
-    const data = await fetchFaqs();
-    setFaqs(data);
-    setLoading(false);
+    try {
+      const data = await fetchFaqs();
+      setFaqs(data);
+    } catch (err) {
+      console.error("Gagal memuat FAQ:", err);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {

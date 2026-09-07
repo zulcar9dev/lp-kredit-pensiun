@@ -22,8 +22,10 @@ function decodeJwtPayload(token: string): { exp?: number } | null {
   }
 }
 
-function isIdleExpired(lastSeen: string | undefined): boolean {
-  if (!lastSeen) return true;
+function isIdleStale(lastSeen: string | undefined): boolean {
+  // Cookie idle tidak ada → sesi baru (baru saja login), BUKAN idle.
+  // Nilai rusak → perlakukan stale agar user di-re-login.
+  if (lastSeen === undefined) return false;
   const ts = Number(lastSeen);
   if (!Number.isFinite(ts)) return true;
   return Date.now() - ts > IDLE_TIMEOUT_MS;
@@ -39,14 +41,19 @@ async function refreshAccessToken(refreshToken: string): Promise<{
   refreshToken: string | null;
 }> {
   try {
-    const res = await fetch(`${INSFORGE_URL}/api/auth/refresh`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        apikey: INSFORGE_ANON_KEY,
-      },
-      body: JSON.stringify({ refreshToken }),
-    });
+    const res = await fetch(
+      `${INSFORGE_URL}/api/auth/refresh?client_type=mobile`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          // Kontrak backend: Authorization Bearer (bukan header `apikey`),
+          // body snake_case `refresh_token` — sesuai wire format @insforge/sdk.
+          Authorization: `Bearer ${INSFORGE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      }
+    );
 
     if (!res.ok) {
       return { accessToken: null, refreshToken: null };
@@ -110,8 +117,10 @@ export async function middleware(request: NextRequest) {
   const refreshTokenValue = request.cookies.get("insforge_refresh_token")?.value;
   const lastSeenValue = request.cookies.get(IDLE_COOKIE)?.value;
 
-  // Idle timeout: no admin activity for 30 minutes → force re-login
-  if (!isLoginPage && isIdleExpired(lastSeenValue)) {
+  // Idle timeout: hanya force re-login bila cookie idle ADA dan sudah stale.
+  // Cookie idle hilang + token valid = sesi baru (baru saja login) — jangan
+  // memantulkan balik ke login dan menghapus token yang baru di-set.
+  if (!isLoginPage && isIdleStale(lastSeenValue)) {
     const response = NextResponse.redirect(new URL("/admin/login", request.url));
     clearAuthCookies(response);
     return response;
@@ -146,7 +155,9 @@ export async function middleware(request: NextRequest) {
 
   if (!tokenExpired) {
     if (isLoginPage) {
-      return NextResponse.redirect(new URL("/admin", request.url));
+      const redirect = NextResponse.redirect(new URL("/admin", request.url));
+      touchIdleCookie(redirect);
+      return redirect;
     }
     const response = NextResponse.next({ request });
     touchIdleCookie(response);

@@ -16,13 +16,15 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([fetchLeads({ limit: 0 }), fetchBankProducts()]).then(
-      ([l, b]) => {
+    Promise.all([fetchLeads({ limit: 0 }), fetchBankProducts()])
+      .then(([l, b]) => {
         setLeads(l.rows);
         setBanks(b);
-        setLoading(false);
-      }
-    );
+      })
+      .catch((err) => {
+        console.error("Gagal memuat data dashboard:", err);
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   const todayStr = new Intl.DateTimeFormat("en-CA", {

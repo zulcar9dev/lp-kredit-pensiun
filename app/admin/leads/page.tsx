@@ -99,10 +99,15 @@ export default function AdminLeadsPage() {
 
   const loadLeads = useCallback(async () => {
     setLoading(true);
-    const result = await fetchLeads(activeFilters);
-    setLeads(result.rows);
-    setTotal(result.count);
-    setLoading(false);
+    try {
+      const result = await fetchLeads(activeFilters);
+      setLeads(result.rows);
+      setTotal(result.count);
+    } catch (err) {
+      console.error("Gagal memuat leads:", err);
+    } finally {
+      setLoading(false);
+    }
   }, [activeFilters]);
 
   useEffect(() => {
@@ -110,10 +115,14 @@ export default function AdminLeadsPage() {
   }, [loadLeads]);
 
   useEffect(() => {
-    fetchLeadOptions().then((o) => {
-      setBankOptions(o.banks);
-      setCampaignOptions(o.campaigns);
-    });
+    fetchLeadOptions()
+      .then((o) => {
+        setBankOptions(o.banks);
+        setCampaignOptions(o.campaigns);
+      })
+      .catch((err) => {
+        console.error("Gagal memuat opsi filter:", err);
+      });
   }, []);
 
   const totalPages = Math.ceil(total / PER_PAGE);

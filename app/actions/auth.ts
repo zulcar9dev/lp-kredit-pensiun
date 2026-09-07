@@ -15,6 +15,10 @@ function getAuthActions() {
   });
 }
 
+// Harus sinkron dengan middleware.ts (IDLE_COOKIE / IDLE_TIMEOUT_MS).
+const IDLE_COOKIE = "admin_last_seen";
+const IDLE_TIMEOUT_S = 30 * 60;
+
 export async function signIn(email: string, password: string) {
   try {
     const auth = getAuthActions();
@@ -25,6 +29,17 @@ export async function signIn(email: string, password: string) {
         user: null,
         error: result.error.message || "Email atau password salah",
       };
+    }
+
+    if (result.data?.user) {
+      // Jangkar idle window di saat login, agar middleware tidak memantulkan
+      // balik ke /admin/login pada navigasi pertama ke /admin.
+      (cookies() as unknown as CookieStore).set?.(IDLE_COOKIE, String(Date.now()), {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        maxAge: IDLE_TIMEOUT_S,
+      });
     }
 
     return { user: result.data?.user ?? null, error: null };
@@ -40,5 +55,6 @@ export async function signOut() {
   } catch {
     // proceed with redirect even if backend signout fails
   }
+  (cookies() as unknown as CookieStore).delete?.(IDLE_COOKIE);
   redirect("/admin/login");
 }

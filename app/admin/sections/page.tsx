@@ -60,9 +60,14 @@ export default function AdminSectionsPage() {
 
   const loadData = useCallback(async () => {
     setLoading(true);
-    const data = await fetchSections();
-    setSections(data);
-    setLoading(false);
+    try {
+      const data = await fetchSections();
+      setSections(data);
+    } catch (err) {
+      console.error("Gagal memuat sections:", err);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {

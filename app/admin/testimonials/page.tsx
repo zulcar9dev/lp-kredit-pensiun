@@ -43,9 +43,14 @@ export default function AdminTestimonialsPage() {
 
   const loadData = useCallback(async () => {
     setLoading(true);
-    const data = await fetchTestimonials();
-    setTestimonials(data);
-    setLoading(false);
+    try {
+      const data = await fetchTestimonials();
+      setTestimonials(data);
+    } catch (err) {
+      console.error("Gagal memuat testimoni:", err);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {

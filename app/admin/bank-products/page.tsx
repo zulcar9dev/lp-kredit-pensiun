@@ -47,9 +47,14 @@ export default function AdminBankProductsPage() {
 
   const loadProducts = useCallback(async () => {
     setLoading(true);
-    const data = await fetchBankProducts();
-    setProducts(data);
-    setLoading(false);
+    try {
+      const data = await fetchBankProducts();
+      setProducts(data);
+    } catch (err) {
+      console.error("Gagal memuat bank & produk:", err);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {

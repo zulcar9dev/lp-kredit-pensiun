@@ -405,7 +405,7 @@ npx -y @insforge/cli deployments env set NEXT_PUBLIC_INSFORGE_ANON_KEY <key>
 npx -y @insforge/cli deployments deploy .
 ```
 
-**Domain:** Subdomain InsForge gratis (misal: `lp-pensiunku.insforge.app`). Custom domain dapat ditambahkan nanti jika diperlukan via `npx -y @insforge/cli domains`.
+**Domain:** Subdomain InsForge gratis: `https://fwdcac57.insforge.site` (frontend deployment aktif). Custom domain dapat ditambahkan nanti jika diperlukan via `npx -y @insforge/cli domains`.
 
 ---
 

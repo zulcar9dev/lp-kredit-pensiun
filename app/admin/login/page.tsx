@@ -24,9 +24,20 @@ export default function AdminLoginPage() {
       if (result.error) {
         setError(result.error);
         setLoading(false);
-      } else {
-        router.push("/admin");
+        return;
       }
+
+      if (!result.user) {
+        setError("Login gagal. Silakan coba lagi.");
+        setLoading(false);
+        return;
+      }
+
+      // replace + refresh agar RSC cache tidak membawa state login lama;
+      // setiap jalur di atas sudah me-reset loading sehingga UI tidak pernah
+      // terjebak pada "Memproses...".
+      router.replace("/admin");
+      router.refresh();
     } catch {
       setError("Gagal menghubungi server. Silakan coba lagi.");
       setLoading(false);
