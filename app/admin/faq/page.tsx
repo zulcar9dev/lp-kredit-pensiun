@@ -22,7 +22,7 @@ const EMPTY_FORM = {
   question: "",
   answer: "",
   display_order: 0,
-  status: "draft" as FaqRow["status"],
+  is_active: false,
 };
 
 export default function AdminFaqPage() {
@@ -66,7 +66,7 @@ export default function AdminFaqPage() {
       question: item.question,
       answer: item.answer,
       display_order: item.display_order,
-      status: item.status,
+      is_active: item.is_active ?? false,
     });
     setShowModal(true);
   }
@@ -83,7 +83,7 @@ export default function AdminFaqPage() {
         question: formData.question,
         answer: formData.answer,
         display_order: formData.display_order,
-        status: formData.status,
+        is_active: formData.is_active,
       });
       setSaving(false);
       if (result.ok) {
@@ -97,7 +97,7 @@ export default function AdminFaqPage() {
         question: formData.question,
         answer: formData.answer,
         display_order: formData.display_order,
-        status: formData.status,
+        is_active: formData.is_active,
       });
       setSaving(false);
       if (result.ok) {
@@ -122,9 +122,8 @@ export default function AdminFaqPage() {
     setShowDelete(false);
   }
 
-  async function toggleStatus(item: FaqRow) {
-    const newStatus = item.status === "published" ? "draft" : "published";
-    await updateFaq(item.id, { status: newStatus });
+  async function toggleActive(item: FaqRow) {
+    await updateFaq(item.id, { is_active: !item.is_active });
     loadData();
   }
 
@@ -146,7 +145,7 @@ export default function AdminFaqPage() {
     loadData();
   }
 
-  function updateField(field: string, value: string | number) {
+  function updateField(field: string, value: string | number | boolean) {
     setFormData((prev) => ({ ...prev, [field]: value }));
   }
 
@@ -201,13 +200,11 @@ export default function AdminFaqPage() {
                     <td>
                       <button
                         type="button"
-                        className={`badge badge-${item.status}`}
-                        onClick={() => toggleStatus(item)}
+                        className={`badge badge-${item.is_active ? "active" : "inactive"}`}
+                        onClick={() => toggleActive(item)}
                         style={{ cursor: "pointer", border: "none" }}
                       >
-                        {item.status === "published"
-                          ? "Published"
-                          : "Draft"}
+                        {item.is_active ? "Tampil" : "Sembunyi"}
                       </button>
                     </td>
                     <td>
@@ -296,16 +293,16 @@ export default function AdminFaqPage() {
                   <label className="form-label">Status</label>
                   <select
                     className="form-select"
-                    value={formData.status}
+                    value={formData.is_active ? "true" : "false"}
                     onChange={(e) =>
                       updateField(
-                        "status",
-                        e.target.value
+                        "is_active",
+                        e.target.value === "true"
                       )
                     }
                   >
-                    <option value="published">Published</option>
-                    <option value="draft">Draft</option>
+                    <option value="true">Tampil di landing page</option>
+                    <option value="false">Sembunyi</option>
                   </select>
                 </div>
                 <div className="form-group">

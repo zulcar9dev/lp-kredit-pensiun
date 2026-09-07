@@ -2,6 +2,7 @@
 
 import { getInsforgeAdmin } from "@/lib/insforge";
 import { requireAdmin } from "@/lib/admin-auth";
+import { normalizeToE164 } from "@/lib/phone";
 import type { Lead } from "@/lib/types/database";
 
 export type LeadRow = Omit<Lead, "created_at" | "updated_at"> & {
@@ -11,8 +12,7 @@ export type LeadRow = Omit<Lead, "created_at" | "updated_at"> & {
 export interface LeadFilters {
   status?: string;
   pensionType?: string;
-  province?: string;
-  interestedBank?: string;
+  applicantRelation?: string;
   campaign?: string;
   search?: string;
   dateFrom?: string;
@@ -39,13 +39,21 @@ function applyFilters(query: unknown, filters: LeadFilters): unknown {
 
   if (filters.status) q = q.eq("status", filters.status);
   if (filters.pensionType) q = q.eq("pension_type", filters.pensionType);
-  if (filters.province) q = q.eq("province", filters.province);
-  if (filters.interestedBank) q = q.eq("interested_bank", filters.interestedBank);
+  if (filters.applicantRelation) {
+    q = q.eq("applicant_relation", filters.applicantRelation);
+  }
   if (filters.campaign) q = q.eq("utm_campaign", filters.campaign);
 
   if (filters.search) {
     const term = filters.search.replace(/[%_,"()\\]/g, "").trim();
-    if (term) q = q.or(`name.ilike.*${term}*,whatsapp.ilike.*${term}*`);
+    if (term) {
+      // Nomor tersimpan E.164 — cocokkan juga input lokal 08…
+      const e164 = normalizeToE164(term).replace(/\D/g, "");
+      const orParts = [`name.ilike.*${term}*`];
+      if (/^62/.test(e164)) orParts.push(`whatsapp.ilike.*${e164}*`);
+      orParts.push(`whatsapp.ilike.*${term.replace(/\D/g, "") || term}*`);
+      q = q.or(orParts.join(","));
+    }
   }
 
   if (filters.dateFrom) q = q.gte("created_at", filters.dateFrom);
@@ -88,25 +96,21 @@ export async function fetchLeads(
 }
 
 export async function fetchLeadOptions(): Promise<{
-  banks: string[];
   campaigns: string[];
 }> {
   await requireAdmin();
 
   const { data } = await getInsforgeAdmin().database
     .from("leads")
-    .select("interested_bank,utm_campaign")
+    .select("utm_campaign")
     .is("deleted_at", null);
 
-  const banks = new Set<string>();
   const campaigns = new Set<string>();
   for (const row of data ?? []) {
-    if (row.interested_bank) banks.add(row.interested_bank);
     if (row.utm_campaign) campaigns.add(row.utm_campaign);
   }
 
   return {
-    banks: [...banks].sort(),
     campaigns: [...campaigns].sort(),
   };
 }
@@ -138,12 +142,28 @@ export async function exportLeads(
 
 export async function updateLead(
   id: string,
-  payload: Partial<Pick<Lead, "name" | "whatsapp" | "pension_type" | "province" | "loan_amount" | "interested_bank" | "status" | "notes">>
+  payload: Partial<
+    Pick<
+      Lead,
+      | "name"
+      | "whatsapp"
+      | "pension_type"
+      | "applicant_relation"
+      | "loan_amount"
+      | "status"
+      | "notes"
+    >
+  >
 ): Promise<{ ok: boolean; error?: string }> {
   await requireAdmin();
   const { error } = await getInsforgeAdmin().database
     .from("leads")
-    .update(payload)
+    .update({
+      ...payload,
+      ...(payload.whatsapp
+        ? { whatsapp: normalizeToE164(payload.whatsapp) }
+        : {}),
+    })
     .eq("id", id)
     .is("deleted_at", null);
 
@@ -154,8 +174,13 @@ export async function updateLead(
 }
 
 export async function createLead(
-  payload: Pick<Lead, "name" | "whatsapp" | "pension_type" | "province"> &
-    Partial<Pick<Lead, "loan_amount" | "interested_bank" | "notes" | "status">>
+  payload: Pick<Lead, "name" | "whatsapp" | "pension_type"> &
+    Partial<
+      Pick<
+        Lead,
+        "applicant_relation" | "loan_amount" | "notes" | "status"
+      >
+    >
 ): Promise<{ ok: boolean; error?: string; id?: string }> {
   await requireAdmin();
   const { data, error } = await getInsforgeAdmin().database
@@ -163,11 +188,12 @@ export async function createLead(
     .insert([
       {
         name: payload.name,
-        whatsapp: payload.whatsapp,
+        whatsapp: normalizeToE164(payload.whatsapp),
         pension_type: payload.pension_type,
-        province: payload.province,
+        applicant_relation: payload.applicant_relation ?? "sendiri",
+        consent: true,
+        consent_at: new Date().toISOString(),
         loan_amount: payload.loan_amount ?? null,
-        interested_bank: payload.interested_bank ?? null,
         notes: payload.notes ?? null,
         status: payload.status ?? "new",
       },

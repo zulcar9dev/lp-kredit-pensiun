@@ -22,11 +22,14 @@ export async function fetchLandingData(): Promise<LandingData> {
     getInsforgeAdmin().database
       .from("testimonials")
       .select("*")
+      .eq("is_active", true)
+      .is("deleted_at", null)
       .order("display_order", { ascending: true }),
     getInsforgeAdmin().database
       .from("faq")
       .select("*")
-      .eq("status", "published")
+      .eq("is_active", true)
+      .is("deleted_at", null)
       .order("display_order", { ascending: true }),
   ]);
 

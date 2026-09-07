@@ -5,6 +5,7 @@ export interface SubmitResult {
   ok: boolean;
   message?: string;
   eventId?: string;
+  leadId?: string;
 }
 
 export async function submitLead(payload: LeadPayload): Promise<SubmitResult> {
@@ -15,9 +16,12 @@ export async function submitLead(payload: LeadPayload): Promise<SubmitResult> {
         name: payload.name,
         whatsapp: payload.whatsapp,
         pension_type: payload.pensionType,
-        province: payload.province,
+        applicant_relation: payload.applicantRelation,
         loan_amount: payload.loanAmount,
-        interested_bank: payload.interested_bank,
+        consent: payload.consent,
+        event_id: payload.event_id,
+        fbp: payload.fbp,
+        fbc: payload.fbc,
         utm_source: payload.utm_source,
         utm_medium: payload.utm_medium,
         utm_campaign: payload.utm_campaign,
@@ -67,7 +71,7 @@ export async function submitLead(payload: LeadPayload): Promise<SubmitResult> {
       };
     }
 
-    return { ok: true, eventId: data?.event_id };
+    return { ok: true, eventId: data?.event_id, leadId: data?.id };
   } catch (err) {
     console.error("submit-lead unexpected:", err);
     return {

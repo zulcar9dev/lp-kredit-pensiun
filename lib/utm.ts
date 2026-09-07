@@ -46,3 +46,40 @@ export function readStoredUtm(): UtmParams {
     return {};
   }
 }
+
+// --------------------------------------------
+// fbc (Meta Click ID) — first-party, tahan lintas sesi
+// --------------------------------------------
+
+const FBC_KEY = "lp-pensiunku:fbc";
+
+function buildFbc(fbclid: string): string {
+  return `fb.1.${Math.floor(Date.now() / 1000)}.${fbclid}`;
+}
+
+export function captureFbc(): void {
+  if (typeof window === "undefined") return;
+  const fbclid = new URLSearchParams(window.location.search).get("fbclid");
+  if (!fbclid) return;
+  try {
+    window.localStorage.setItem(FBC_KEY, buildFbc(fbclid));
+  } catch {
+    // penyimpanan tidak tersedia, biarkan kosong
+  }
+}
+
+export function readStoredFbc(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return window.localStorage.getItem(FBC_KEY);
+  } catch {
+    return null;
+  }
+}
+
+// Nilai cookie _fbp dari Meta Pixel (diteruskan ke CAPI untuk Advanced Matching)
+export function readFbpCookie(): string | null {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie.match(/(?:^|;\s*)_fbp=([^;]+)/);
+  return match ? decodeURIComponent(match[1]) : null;
+}

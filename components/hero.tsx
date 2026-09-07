@@ -2,6 +2,7 @@ import { WaButton } from "@/components/wa-button";
 import { TelLink } from "@/components/tel-link";
 import { getAppSettings } from "@/lib/settings";
 import { buildWaLink } from "@/lib/wa";
+import { WA_OFFICE_HOURS } from "@/lib/constants";
 
 export async function Hero() {
   const settings = await getAppSettings();
@@ -32,6 +33,9 @@ export async function Hero() {
             </a>
           </div>
 
+          <p className="mt-4 text-sm text-stone-600">
+            Dibalas cepat setiap hari {WA_OFFICE_HOURS}.
+          </p>
           <p className="mt-6 text-base text-stone-600">
             Lebih suka menelepon langsung? <TelLink number={settings.waNumberDisplay} className="ml-1" />
           </p>

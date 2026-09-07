@@ -1,12 +1,18 @@
 export interface Lead {
   id: string;
   name: string;
-  whatsapp: string;
+  whatsapp: string; // E.164: 628…
   pension_type: string;
-  province: string;
+  applicant_relation: "sendiri" | "orang_tua";
+  province: string | null; // legacy (form v2 tidak lagi mengumpulkan)
   loan_amount: number | null;
-  interested_bank: string | null;
-  status: "new" | "contacted" | "processed" | "closed";
+  interested_bank: string | null; // legacy
+  status: "new" | "contacted" | "qualified" | "approved" | "rejected" | "invalid";
+  consent: boolean;
+  consent_at: string | null;
+  event_id: string | null;
+  fbp: string | null;
+  fbc: string | null;
   utm_source: string | null;
   utm_medium: string | null;
   utm_campaign: string | null;
@@ -14,9 +20,26 @@ export interface Lead {
   utm_term: string | null;
   notes: string | null;
   ip_address: string | null;
+  user_agent: string | null;
   created_at: string;
   updated_at: string;
   deleted_at?: string | null;
+}
+
+export interface WaClick {
+  id: string;
+  event_id: string | null;
+  utm_source: string | null;
+  utm_medium: string | null;
+  utm_campaign: string | null;
+  utm_content: string | null;
+  utm_term: string | null;
+  fbp: string | null;
+  fbc: string | null;
+  lead_id: string | null;
+  ip_address: string | null;
+  user_agent: string | null;
+  created_at: string;
 }
 
 export interface BankProduct {
@@ -45,20 +68,6 @@ export interface AppSetting {
   updated_at: string;
 }
 
-export interface Section {
-  id: string;
-  section_type: string;
-  title: string | null;
-  content: Record<string, unknown> | null;
-  image_url: string | null;
-  image_key: string | null;
-  display_order: number;
-  status: "published" | "draft";
-  created_at: string;
-  updated_at: string;
-  deleted_at?: string | null;
-}
-
 export interface Testimonial {
   id: string;
   name: string;
@@ -67,9 +76,10 @@ export interface Testimonial {
   photo_url: string | null;
   photo_key: string | null;
   rating: number;
-  is_featured: boolean;
+  is_active: boolean;
   display_order: number;
   created_at: string;
+  deleted_at?: string | null;
 }
 
 export interface Faq {
@@ -77,19 +87,7 @@ export interface Faq {
   question: string;
   answer: string;
   display_order: number;
-  status: "published" | "draft";
-  created_at: string;
-}
-
-export interface CampaignSetting {
-  id: string;
-  campaign_name: string;
-  utm_source: string | null;
-  utm_medium: string | null;
-  utm_campaign: string | null;
-  utm_content: string | null;
-  utm_term: string | null;
-  pixel_id: string | null;
   is_active: boolean;
   created_at: string;
+  deleted_at?: string | null;
 }

@@ -5,9 +5,9 @@ import { WaButton } from "@/components/wa-button";
 import { TelLink } from "@/components/tel-link";
 import { getAppSettings } from "@/lib/settings";
 import { buildWaLink } from "@/lib/wa";
-import type { BankProduct } from "@/lib/types/database";
+import { WA_OFFICE_HOURS } from "@/lib/constants";
 
-export async function LeadFormSection({ bankProducts }: { bankProducts: BankProduct[] }) {
+export async function LeadFormSection() {
   const settings = await getAppSettings();
   const waLink = buildWaLink(settings);
 
@@ -48,7 +48,7 @@ export async function LeadFormSection({ bankProducts }: { bankProducts: BankProd
         </div>
 
         <div className="rounded-xl border border-stone-200 bg-white p-6 shadow-card-lg md:p-9">
-          <LeadForm bankProducts={bankProducts} waLink={waLink} waNumberIntl={settings.waNumberIntl} />
+          <LeadForm waLink={waLink} />
 
           <div className="mt-7 border-t border-stone-100 pt-6">
             <p className="font-bold text-navy-900">
@@ -58,6 +58,9 @@ export async function LeadFormSection({ bankProducts }: { bankProducts: BankProd
               <WaButton waLink={waLink} className="w-full sm:w-auto" />
               <TelLink number={settings.waNumberDisplay} />
             </div>
+            <p className="mt-3 text-sm text-stone-600">
+              Dibalas cepat setiap hari {WA_OFFICE_HOURS}.
+            </p>
           </div>
         </div>
       </div>

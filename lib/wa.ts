@@ -1,43 +1,38 @@
 import type { PensionType } from "@/lib/constants";
-import { type AppSettings } from "@/lib/settings";
+import type { UtmParams } from "@/lib/utm";
 import { formatRupiah } from "@/lib/format";
 
 export function buildWaLink(
-  settings: AppSettings,
+  settings: { waNumberIntl: string; waGreeting: string },
   options?: { message?: string }
 ): string {
   const text = options?.message ?? settings.waGreeting;
   return `https://wa.me/${settings.waNumberIntl}?text=${encodeURIComponent(text)}`;
 }
 
-export function buildWaSimulationMessage(data: {
-  categoryLabel: string;
-  income: number;
-  tenorMonths: number;
-  plafonMaks: number;
-  angsuran: number;
+// Route internal untuk tracking CAPI "Contact" sebelum redirect ke wa.me
+export const CONTACT_WA_PATH = "/api/contact-wa";
+
+export function buildContactWaUrl(params: {
+  eid: string;
+  utm?: UtmParams;
+  fbc?: string | null;
+  leadRef?: string | null;
 }): string {
-  const years = Math.floor(data.tenorMonths / 12);
-  const months = data.tenorMonths % 12;
-  const tenorText = months > 0 ? `${years} tahun ${months} bulan` : `${years} tahun`;
-  return [
-    "Halo, saya barusan mencoba simulasi kredit pensiun di website.",
-    "",
-    "Hasil simulasinya:",
-    `Status: ${data.categoryLabel}`,
-    `Pendapatan per bulan: ${formatRupiah(data.income)}`,
-    `Tenor dipilih: ${tenorText}`,
-    `Estimasi plafon maksimal: ${formatRupiah(data.plafonMaks)}`,
-    `Estimasi angsuran per bulan: ${formatRupiah(data.angsuran)}`,
-    "",
-    "Mohon dibantu jelaskan lebih detail ya. Terima kasih.",
-  ].join("\n");
+  const search = new URLSearchParams();
+  search.set("eid", params.eid);
+  for (const [key, value] of Object.entries(params.utm ?? {})) {
+    if (value) search.set(key, value);
+  }
+  if (params.fbc) search.set("fbc", params.fbc);
+  if (params.leadRef) search.set("lead", params.leadRef);
+  return `${CONTACT_WA_PATH}?${search.toString()}`;
 }
 
 export function buildWaLeadMessage(data: {
   name: string;
   pensionType: PensionType | "";
-  province: string;
+  forParent?: boolean;
   loanAmount?: number;
 }): string {
   const nominal = data.loanAmount ? formatRupiah(data.loanAmount) : "-";
@@ -47,7 +42,7 @@ export function buildWaLeadMessage(data: {
     "Mohon dicek ya, saya minta dibantu carikan produk kredit pensiun yang cocok.",
     "",
     `Jenis pensiun: ${data.pensionType || "-"}`,
-    `Provinsi: ${data.province || "-"}`,
+    `Pengajuan untuk: ${data.forParent ? "Orang tua" : "Diri sendiri"}`,
     `Nominal yang dibutuhkan: ${nominal}`,
   ].join("\n");
 }

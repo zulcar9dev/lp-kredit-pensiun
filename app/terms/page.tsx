@@ -51,6 +51,20 @@ export default function TermsPage() {
             menerima penjelasan.
           </p>
         </section>
+
+        <section>
+          <h2 className="text-xl tracking-tight text-navy-900">Data pribadi</h2>
+          <p className="mt-2">
+            Penggunaan data pribadi Bapak/Ibu diatur dalam{" "}
+            <Link
+              href="/privacy"
+              className="font-semibold text-brand-700 underline decoration-brand-300 decoration-2 underline-offset-4"
+            >
+              Kebijakan Privasi
+            </Link>
+            .
+          </p>
+        </section>
       </div>
 
       <Link

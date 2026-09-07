@@ -72,21 +72,15 @@ export async function deleteTestimonial(
   id: string
 ): Promise<{ ok: boolean; error?: string }> {
   await requireAdmin();
-  const { data: current } = await getInsforgeAdmin().database
-    .from("testimonials")
-    .select("photo_key")
-    .eq("id", id)
-    .single();
-
+  // Soft delete — section landing otomatis menyembunyikan baris ter-soft-delete
   const { error } = await getInsforgeAdmin().database
     .from("testimonials")
-    .delete()
+    .update({ deleted_at: new Date().toISOString() })
     .eq("id", id);
 
   if (error) {
     return { ok: false, error: error.message };
   }
 
-  await removeStoredImage(current?.photo_key);
   return { ok: true };
 }

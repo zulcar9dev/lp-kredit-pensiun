@@ -3,16 +3,6 @@ const DRAFT_KEY = "lp-pensiunku:draft";
 export interface LeadDraft {
   name?: string;
   whatsapp?: string;
-  loanAmount?: number;
-}
-
-export function saveLeadDraft(draft: LeadDraft): void {
-  if (typeof window === "undefined") return;
-  try {
-    window.sessionStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
-  } catch {
-    // penyimpanan tidak tersedia, biarkan kosong
-  }
 }
 
 export function readLeadDraft(): LeadDraft {
@@ -32,12 +22,4 @@ export function clearLeadDraft(): void {
   } catch {
     // penyimpanan tidak tersedia, biarkan kosong
   }
-}
-
-export function takeLeadDraftLoanAmount(): number | undefined {
-  if (typeof window === "undefined") return undefined;
-  const draft = readLeadDraft();
-  if (typeof draft.loanAmount !== "number") return undefined;
-  saveLeadDraft({ name: draft.name, whatsapp: draft.whatsapp });
-  return draft.loanAmount;
 }

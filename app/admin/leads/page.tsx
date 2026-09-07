@@ -22,16 +22,19 @@ import {
   type LeadFilters,
 } from "@/lib/actions/leads";
 import { formatRupiah } from "@/lib/format";
-import { PROVINCES } from "@/lib/provinces";
 import { PENSION_TYPES } from "@/lib/constants";
+
+const APPLICANT_RELATION_LABELS: Record<string, string> = {
+  sendiri: "Diri sendiri",
+  orang_tua: "Orang tua",
+};
 
 const EMPTY_FORM = {
   name: "",
   whatsapp: "",
   pension_type: "PNS" as string,
-  province: "",
+  applicant_relation: "sendiri" as LeadRow["applicant_relation"],
   loan_amount: null as number | null,
-  interested_bank: "",
   status: "new" as LeadRow["status"],
   notes: "",
 };
@@ -42,14 +45,12 @@ export default function AdminLeadsPage() {
   const [leads, setLeads] = useState<LeadRow[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [bankOptions, setBankOptions] = useState<string[]>([]);
   const [campaignOptions, setCampaignOptions] = useState<string[]>([]);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [pensionFilter, setPensionFilter] = useState("all");
-  const [provinceFilter, setProvinceFilter] = useState("all");
-  const [bankFilter, setBankFilter] = useState("all");
+  const [relationFilter, setRelationFilter] = useState("all");
   const [campaignFilter, setCampaignFilter] = useState("all");
   const [sort, setSort] = useState<"newest" | "oldest">("newest");
   const [dateFrom, setDateFrom] = useState("");
@@ -75,8 +76,7 @@ export default function AdminLeadsPage() {
   const activeFilters = useMemo<LeadFilters>(() => ({
     status: statusFilter === "all" ? undefined : statusFilter,
     pensionType: pensionFilter === "all" ? undefined : pensionFilter,
-    province: provinceFilter === "all" ? undefined : provinceFilter,
-    interestedBank: bankFilter === "all" ? undefined : bankFilter,
+    applicantRelation: relationFilter === "all" ? undefined : relationFilter,
     campaign: campaignFilter === "all" ? undefined : campaignFilter,
     search: debouncedSearch || undefined,
     dateFrom: dateFrom || undefined,
@@ -87,8 +87,7 @@ export default function AdminLeadsPage() {
   }), [
     statusFilter,
     pensionFilter,
-    provinceFilter,
-    bankFilter,
+    relationFilter,
     campaignFilter,
     debouncedSearch,
     dateFrom,
@@ -117,7 +116,6 @@ export default function AdminLeadsPage() {
   useEffect(() => {
     fetchLeadOptions()
       .then((o) => {
-        setBankOptions(o.banks);
         setCampaignOptions(o.campaigns);
       })
       .catch((err) => {
@@ -139,9 +137,8 @@ export default function AdminLeadsPage() {
       name: lead.name,
       whatsapp: lead.whatsapp,
       pension_type: lead.pension_type,
-      province: lead.province,
+      applicant_relation: lead.applicant_relation ?? "sendiri",
       loan_amount: lead.loan_amount ?? null,
-      interested_bank: lead.interested_bank ?? "",
       status: lead.status,
       notes: lead.notes ?? "",
     });
@@ -166,9 +163,8 @@ export default function AdminLeadsPage() {
         name: formData.name,
         whatsapp: formData.whatsapp,
         pension_type: formData.pension_type,
-        province: formData.province,
+        applicant_relation: formData.applicant_relation,
         loan_amount: formData.loan_amount,
-        interested_bank: formData.interested_bank || null,
         status: formData.status,
         notes: formData.notes || null,
       });
@@ -184,9 +180,8 @@ export default function AdminLeadsPage() {
         name: formData.name,
         whatsapp: formData.whatsapp,
         pension_type: formData.pension_type,
-        province: formData.province,
+        applicant_relation: formData.applicant_relation,
         loan_amount: formData.loan_amount ?? undefined,
-        interested_bank: formData.interested_bank || undefined,
         status: formData.status,
         notes: formData.notes || undefined,
       });
@@ -228,7 +223,9 @@ export default function AdminLeadsPage() {
   async function handleExport() {
     setSaving(true);
     try {
-      const { limit: _l, page: _p, ...scope } = activeFilters;
+      const scope = { ...activeFilters };
+      delete (scope as { limit?: number }).limit;
+      delete (scope as { page?: number }).page;
       const rows = await exportLeads(scope);
       if (rows.length === 0) {
         alert("Tidak ada data untuk diexport.");
@@ -239,16 +236,18 @@ export default function AdminLeadsPage() {
         Nama: l.name,
         WhatsApp: l.whatsapp,
         "Jenis Pensiun": l.pension_type,
-        Provinsi: l.province,
+        "Pengajuan Untuk": APPLICANT_RELATION_LABELS[l.applicant_relation] || l.applicant_relation,
         "Pinjaman (Rp)": l.loan_amount ?? 0,
-        "Bank Diminati": l.interested_bank || "",
         Status: statusLabel(l.status),
+        "Setuju PDP": l.consent ? "Ya" : "Tidak",
         Catatan: l.notes || "",
+        Provinsi: l.province || "",
         "UTM Source": l.utm_source || "",
         "UTM Medium": l.utm_medium || "",
         "UTM Campaign": l.utm_campaign || "",
         "UTM Content": l.utm_content || "",
         "UTM Term": l.utm_term || "",
+        "Event ID": l.event_id || "",
         "IP Address": l.ip_address || "",
         Tanggal: new Date(l.created_at).toLocaleString("id-ID", {
           timeZone: "Asia/Jakarta",
@@ -268,9 +267,15 @@ export default function AdminLeadsPage() {
       ? "Baru"
       : s === "contacted"
         ? "Dihubungi"
-        : s === "processed"
-          ? "Proses"
-          : "Selesai";
+        : s === "qualified"
+          ? "Kualifikasi"
+          : s === "approved"
+            ? "Disetujui"
+            : s === "rejected"
+              ? "Ditolak"
+              : s === "invalid"
+                ? "Invalid"
+                : s;
 
   return (
     <>
@@ -317,8 +322,10 @@ export default function AdminLeadsPage() {
             <option value="all">Semua Status</option>
             <option value="new">Baru</option>
             <option value="contacted">Dihubungi</option>
-            <option value="processed">Proses</option>
-            <option value="closed">Selesai</option>
+            <option value="qualified">Kualifikasi</option>
+            <option value="approved">Disetujui</option>
+            <option value="rejected">Ditolak</option>
+            <option value="invalid">Invalid</option>
           </select>
           <select
             className="form-select"
@@ -337,33 +344,15 @@ export default function AdminLeadsPage() {
           </select>
           <select
             className="form-select"
-            value={provinceFilter}
+            value={relationFilter}
             onChange={(e) => {
-              setProvinceFilter(e.target.value);
+              setRelationFilter(e.target.value);
               setCurrentPage(1);
             }}
           >
-            <option value="all">Semua Provinsi</option>
-            {PROVINCES.map((p) => (
-              <option key={p} value={p}>
-                {p}
-              </option>
-            ))}
-          </select>
-          <select
-            className="form-select"
-            value={bankFilter}
-            onChange={(e) => {
-              setBankFilter(e.target.value);
-              setCurrentPage(1);
-            }}
-          >
-            <option value="all">Semua Bank</option>
-            {bankOptions.map((b) => (
-              <option key={b} value={b}>
-                {b}
-              </option>
-            ))}
+            <option value="all">Semua Pengaju</option>
+            <option value="sendiri">Diri sendiri</option>
+            <option value="orang_tua">Orang tua</option>
           </select>
           <select
             className="form-select"
@@ -415,8 +404,7 @@ export default function AdminLeadsPage() {
               setSearch("");
               setStatusFilter("all");
               setPensionFilter("all");
-              setProvinceFilter("all");
-              setBankFilter("all");
+              setRelationFilter("all");
               setCampaignFilter("all");
               setSort("newest");
               setDateFrom("");
@@ -435,7 +423,7 @@ export default function AdminLeadsPage() {
                 <th>Nama</th>
                 <th>WhatsApp</th>
                 <th>Jenis Pensiun</th>
-                <th>Provinsi</th>
+                <th>Pengajuan</th>
                 <th>Pinjaman</th>
                 <th>Status</th>
                 <th>Tanggal</th>
@@ -467,7 +455,10 @@ export default function AdminLeadsPage() {
                     <td className="table-link">{lead.name}</td>
                     <td className="table-mono">{lead.whatsapp}</td>
                     <td>{lead.pension_type}</td>
-                    <td>{lead.province}</td>
+                    <td>
+                      {APPLICANT_RELATION_LABELS[lead.applicant_relation] ||
+                        lead.applicant_relation}
+                    </td>
                     <td>{formatRupiah(lead.loan_amount)}</td>
                     <td>
                       <span className={`badge badge-${lead.status}`}>
@@ -584,18 +575,16 @@ export default function AdminLeadsPage() {
                   </select>
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Provinsi</label>
+                  <label className="form-label">Pengajuan Untuk</label>
                   <select
                     className="form-select"
-                    value={formData.province}
-                    onChange={(e) => updateField("province", e.target.value)}
+                    value={formData.applicant_relation}
+                    onChange={(e) =>
+                      updateField("applicant_relation", e.target.value)
+                    }
                   >
-                    <option value="">Pilih provinsi</option>
-                    {PROVINCES.map((p) => (
-                      <option key={p} value={p}>
-                        {p}
-                      </option>
-                    ))}
+                    <option value="sendiri">Diri sendiri</option>
+                    <option value="orang_tua">Orang tua</option>
                   </select>
                 </div>
               </div>
@@ -612,19 +601,6 @@ export default function AdminLeadsPage() {
                   />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Bank yang Diminati</label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    value={formData.interested_bank}
-                    onChange={(e) =>
-                      updateField("interested_bank", e.target.value)
-                    }
-                  />
-                </div>
-              </div>
-              <div className="form-row">
-                <div className="form-group">
                   <label className="form-label">Status</label>
                   <select
                     className="form-select"
@@ -635,8 +611,10 @@ export default function AdminLeadsPage() {
                   >
                     <option value="new">Baru</option>
                     <option value="contacted">Dihubungi</option>
-                    <option value="processed">Proses</option>
-                    <option value="closed">Selesai</option>
+                    <option value="qualified">Kualifikasi</option>
+                    <option value="approved">Disetujui</option>
+                    <option value="rejected">Ditolak</option>
+                    <option value="invalid">Invalid</option>
                   </select>
                 </div>
               </div>
@@ -713,9 +691,12 @@ export default function AdminLeadsPage() {
                 </div>
                 <div>
                   <div className="text-xs text-muted font-semibold">
-                    Provinsi
+                    Pengajuan Untuk
                   </div>
-                  <div className="font-bold">{selectedLead.province}</div>
+                  <div className="font-bold">
+                    {APPLICANT_RELATION_LABELS[selectedLead.applicant_relation] ||
+                      selectedLead.applicant_relation}
+                  </div>
                 </div>
                 <div>
                   <div className="text-xs text-muted font-semibold">
@@ -727,10 +708,13 @@ export default function AdminLeadsPage() {
                 </div>
                 <div>
                   <div className="text-xs text-muted font-semibold">
-                    Bank Diminati
+                    Setuju PDP
                   </div>
                   <div className="font-bold">
-                    {selectedLead.interested_bank || "-"}
+                    {selectedLead.consent ? "Ya" : "Tidak"}
+                    {selectedLead.consent_at
+                      ? ` — ${new Date(selectedLead.consent_at).toLocaleString("id-ID", { timeZone: "Asia/Jakarta" })}`
+                      : ""}
                   </div>
                 </div>
                 <div>
@@ -740,6 +724,14 @@ export default function AdminLeadsPage() {
                   <span className={`badge badge-${selectedLead.status}`}>
                     {statusLabel(selectedLead.status)}
                   </span>
+                </div>
+                <div>
+                  <div className="text-xs text-muted font-semibold">
+                    Event ID (dedup CAPI)
+                  </div>
+                  <div className="table-mono text-sm">
+                    {selectedLead.event_id || "-"}
+                  </div>
                 </div>
                 <div>
                   <div className="text-xs text-muted font-semibold">

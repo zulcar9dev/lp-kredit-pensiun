@@ -1,7 +1,10 @@
 import { z } from "zod";
-import { PENSION_TYPES } from "@/lib/constants";
+import { LOAN_MAX, LOAN_MIN, PENSION_TYPES } from "@/lib/constants";
 
 const PHONE_REGEX = /^(?:\+62|62|0)8\d{7,12}$/;
+
+export const APPLICANT_RELATIONS = ["sendiri", "orang_tua"] as const;
+export type ApplicantRelation = (typeof APPLICANT_RELATIONS)[number];
 
 export const nameField = z
   .string()
@@ -23,16 +26,26 @@ export const leadSchema = z.object({
   pensionType: z.enum(PENSION_TYPES, {
     message: "Mohon pilih jenis pensiunnya dulu.",
   }),
-  province: z.string().min(1, "Mohon pilih provinsinya dulu."),
-  loanAmount: z.number().int().min(0).optional(),
-  interestedBank: z.string().trim().max(120).optional(),
+  applicantRelation: z.enum(APPLICANT_RELATIONS).default("sendiri"),
+  loanAmount: z
+    .number()
+    .int()
+    .min(LOAN_MIN, "Nominal minimal Rp 10 juta.")
+    .max(LOAN_MAX, "Nominal maksimal Rp 500 juta.")
+    .optional(),
+  // UU PDP — wajib dicentang sebelum submit
+  consent: z.literal(true, {
+    message: "Mohon centang persetujuannya dulu ya.",
+  }),
 });
 
 export type LeadInput = z.input<typeof leadSchema>;
 export type LeadData = z.output<typeof leadSchema>;
 
 export interface LeadPayload extends LeadData {
-  interested_bank?: string;
+  event_id?: string;
+  fbp?: string | null;
+  fbc?: string | null;
   utm_source?: string;
   utm_medium?: string;
   utm_campaign?: string;

@@ -57,11 +57,12 @@ export default function AdminSettingsPage() {
       keys.map((key) => upsertSetting(key, getSetting(key)))
     );
     setSaving(false);
-    if (results.every((r) => r.ok)) {
+    const failed = results.find((r) => !r.ok);
+    if (!failed) {
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } else {
-      alert("Gagal menyimpan pengaturan");
+      alert("Gagal menyimpan pengaturan: " + (failed.error ?? "coba lagi"));
     }
   }
 
@@ -117,7 +118,7 @@ export default function AdminSettingsPage() {
             Nomor WhatsApp
             <span className="form-label-hint">
               {" "}
-              — format: 08xxxxxxxxxx (tanpa spasi)
+              — format Indonesia: 08xxxxxxxxxx atau 62xxxxxxxxxx
             </span>
           </label>
           <input
@@ -128,7 +129,9 @@ export default function AdminSettingsPage() {
             onChange={(e) => updateLocal("wa_number", e.target.value)}
           />
           <div className="form-hint">
-            Nomor ini digunakan untuk tombol WhatsApp di landing page.
+            Nomor ini dipakai tombol WhatsApp di landing page dan otomatis
+            disimpan dalam format internasional (628…). Nomor tampilan diatur di
+            bawah.
           </div>
         </div>
 

@@ -2,21 +2,11 @@ import { createAdminClient } from "npm:@insforge/sdk";
 
 const RATE_LIMIT_MAX = 5;
 const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
+const DUPLICATE_WINDOW_MS = 24 * 60 * 60 * 1000;
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 
 const PENSION_TYPES = ["TNI/Polri", "PNS", "BUMN", "Swasta"];
-
-const PROVINCES = [
-  "Aceh", "Bali", "Bangka Belitung", "Banten", "Bengkulu", "DI Yogyakarta",
-  "DKI Jakarta", "Gorontalo", "Jambi", "Jawa Barat", "Jawa Tengah",
-  "Jawa Timur", "Kalimantan Barat", "Kalimantan Selatan", "Kalimantan Tengah",
-  "Kalimantan Timur", "Kalimantan Utara", "Kepulauan Riau", "Lampung",
-  "Maluku", "Maluku Utara", "Nusa Tenggara Barat", "Nusa Tenggara Timur",
-  "Papua", "Papua Barat", "Papua Barat Daya", "Papua Pegunungan",
-  "Papua Selatan", "Papua Tengah", "Riau", "Sulawesi Barat",
-  "Sulawesi Selatan", "Sulawesi Tengah", "Sulawesi Tenggara", "Sulawesi Utara",
-  "Sumatra Barat", "Sumatra Selatan", "Sumatra Utara",
-];
+const APPLICANT_RELATIONS = ["sendiri", "orang_tua"];
 
 const LOAN_MIN = 10_000_000;
 const LOAN_MAX = 500_000_000;
@@ -62,7 +52,7 @@ function sha256Hex(message: string): Promise<string> {
     );
 }
 
-// Normalisasi ke format internasional tanpa tanda plus: 62xxxxxxxxxx
+// Normalisasi ke E.164 tanpa tanda plus: 62xxxxxxxxxx (disimpan ke DB apa adanya)
 function toE164Digits(raw: string): string {
   const cleaned = raw.replace(/[\s\-().]/g, "");
   if (cleaned.startsWith("+62")) return cleaned.slice(1);
@@ -74,6 +64,9 @@ function toE164Digits(raw: string): string {
 async function sendLeadToMetaCAPI(opts: {
   eventId: string;
   phoneE164: string;
+  firstName: string;
+  fbp: string | null;
+  fbc: string | null;
   ip: string;
   userAgent: string | null;
 }): Promise<void> {
@@ -85,7 +78,10 @@ async function sendLeadToMetaCAPI(opts: {
   }
 
   try {
-    const ph = await sha256Hex(opts.phoneE164.trim().toLowerCase());
+    const [ph, fn] = await Promise.all([
+      sha256Hex(opts.phoneE164.trim().toLowerCase()),
+      sha256Hex(opts.firstName.trim().toLowerCase().split(/\s+/)[0] ?? ""),
+    ]);
     const payload = {
       data: [
         {
@@ -94,6 +90,9 @@ async function sendLeadToMetaCAPI(opts: {
           event_id: opts.eventId,
           user_data: {
             ph,
+            fn,
+            fbp: opts.fbp || undefined,
+            fbc: opts.fbc || undefined,
             client_ip_address: opts.ip || undefined,
             client_user_agent: opts.userAgent || undefined,
           },
@@ -148,18 +147,26 @@ export default async function (req: Request): Promise<Response> {
   }
 
   const {
-    name, whatsapp, pension_type, province, loan_amount, interested_bank,
+    name, whatsapp, pension_type, applicant_relation, loan_amount, consent,
+    event_id, fbp, fbc,
     utm_source, utm_medium, utm_campaign, utm_content, utm_term,
   } = body;
+
+  // UU PDP: persetujuan wajib sebelum data diproses
+  if (consent !== true) {
+    return json(
+      { error: "Mohon centang persetujuan pemrosesan data terlebih dulu." },
+      400,
+    );
+  }
 
   // Validasi wajib + tipe
   if (
     typeof name !== "string" ||
     typeof whatsapp !== "string" ||
-    typeof pension_type !== "string" ||
-    typeof province !== "string"
+    typeof pension_type !== "string"
   ) {
-    return json({ error: "Nama, WhatsApp, jenis pensiun, dan provinsi wajib diisi." }, 400);
+    return json({ error: "Nama, WhatsApp, dan jenis pensiun wajib diisi." }, 400);
   }
 
   const trimmedName = name.trim();
@@ -177,9 +184,11 @@ export default async function (req: Request): Promise<Response> {
     return json({ error: "Jenis pensiun tidak valid." }, 400);
   }
 
-  if (!PROVINCES.includes(province)) {
-    return json({ error: "Provinsi tidak valid." }, 400);
-  }
+  const relation =
+    typeof applicant_relation === "string" &&
+    APPLICANT_RELATIONS.includes(applicant_relation)
+      ? applicant_relation
+      : "sendiri";
 
   let loanAmount: number | null = null;
   if (loan_amount !== undefined && loan_amount !== null && loan_amount !== "") {
@@ -194,6 +203,14 @@ export default async function (req: Request): Promise<Response> {
     if (typeof v !== "string" || v.trim() === "") return null;
     return v.trim().slice(0, max);
   };
+
+  // event_id dari klien untuk dedup Pixel ↔ CAPI; fallback bila tidak ada
+  const clientEventId =
+    typeof event_id === "string" && event_id.trim() !== ""
+      ? event_id.trim().slice(0, 100)
+      : null;
+
+  const whatsappE164 = toE164Digits(cleanWhatsapp);
 
   const client = createAdminClient({
     baseUrl: Deno.env.get("INSFORGE_BASE_URL"),
@@ -212,22 +229,51 @@ export default async function (req: Request): Promise<Response> {
     return json({ error: "Terlalu banyak permintaan. Coba lagi nanti." }, 429);
   }
 
+  // Anti double-submit: nomor sama dalam 24 jam → respons tetap sukses tanpa baris baru
+  const dayAgo = new Date(Date.now() - DUPLICATE_WINDOW_MS).toISOString();
+  const { data: existing } = await client.database
+    .from("leads")
+    .select("id, event_id")
+    .eq("whatsapp", whatsappE164)
+    .is("deleted_at", null)
+    .gte("created_at", dayAgo)
+    .order("created_at", { ascending: false })
+    .limit(1);
+
+  if (existing && existing.length > 0) {
+    const dup = existing[0] as { id: string; event_id: string | null };
+    return json(
+      {
+        ok: true,
+        id: dup.id,
+        event_id: dup.event_id ?? clientEventId ?? `lead-${dup.id}`,
+        duplicate: true,
+      },
+      200,
+    );
+  }
+
   const { data, error } = await client.database
     .from("leads")
     .insert([
       {
         name: trimmedName,
-        whatsapp: cleanWhatsapp,
+        whatsapp: whatsappE164,
         pension_type,
-        province,
+        applicant_relation: relation,
         loan_amount: loanAmount,
-        interested_bank: shortText(interested_bank, 100),
+        consent: true,
+        consent_at: new Date().toISOString(),
+        event_id: clientEventId,
+        fbp: shortText(fbp, 200),
+        fbc: shortText(fbc, 200),
         utm_source: shortText(utm_source, 100),
         utm_medium: shortText(utm_medium, 100),
         utm_campaign: shortText(utm_campaign, 200),
         utm_content: shortText(utm_content, 200),
         utm_term: shortText(utm_term, 200),
         ip_address: ip,
+        user_agent: userAgent ? userAgent.slice(0, 500) : null,
       },
     ])
     .select("id")
@@ -241,10 +287,13 @@ export default async function (req: Request): Promise<Response> {
     );
   }
 
-  const eventId = `lead-${data.id}`;
+  const eventId = clientEventId ?? `lead-${data.id}`;
   await sendLeadToMetaCAPI({
     eventId,
-    phoneE164: toE164Digits(cleanWhatsapp),
+    phoneE164: whatsappE164,
+    firstName: trimmedName,
+    fbp: shortText(fbp, 200),
+    fbc: shortText(fbc, 200),
     ip,
     userAgent,
   });

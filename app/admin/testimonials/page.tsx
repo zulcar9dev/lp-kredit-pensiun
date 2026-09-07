@@ -27,7 +27,7 @@ const EMPTY_FORM = {
   photo_url: "",
   photo_key: "",
   rating: 5,
-  is_featured: false,
+  is_active: true,
   display_order: 0,
 };
 
@@ -75,7 +75,7 @@ export default function AdminTestimonialsPage() {
       photo_url: item.photo_url ?? "",
       photo_key: item.photo_key ?? "",
       rating: item.rating,
-      is_featured: item.is_featured,
+      is_active: item.is_active ?? true,
       display_order: item.display_order,
     });
     setShowModal(true);
@@ -96,7 +96,7 @@ export default function AdminTestimonialsPage() {
         photo_url: formData.photo_url || null,
         photo_key: formData.photo_key || null,
         rating: formData.rating,
-        is_featured: formData.is_featured,
+        is_active: formData.is_active,
         display_order: formData.display_order,
       });
       setSaving(false);
@@ -114,7 +114,7 @@ export default function AdminTestimonialsPage() {
         photo_url: formData.photo_url || null,
         photo_key: formData.photo_key || null,
         rating: formData.rating,
-        is_featured: formData.is_featured,
+        is_active: formData.is_active,
         display_order: formData.display_order,
       });
       setSaving(false);
@@ -140,8 +140,8 @@ export default function AdminTestimonialsPage() {
     setShowDelete(false);
   }
 
-  async function toggleFeatured(item: TestimonialRow) {
-    await updateTestimonial(item.id, { is_featured: !item.is_featured });
+  async function toggleActive(item: TestimonialRow) {
+    await updateTestimonial(item.id, { is_active: !item.is_active });
     loadData();
   }
 
@@ -201,7 +201,7 @@ export default function AdminTestimonialsPage() {
                 <th>Jenis Pensiun</th>
                 <th>Rating</th>
                 <th>Ulasan</th>
-                <th>Featured</th>
+                <th>Tampil</th>
                 <th className="text-right">Aksi</th>
               </tr>
             </thead>
@@ -255,11 +255,11 @@ export default function AdminTestimonialsPage() {
                     <td>
                       <button
                         type="button"
-                        className={`badge badge-${item.is_featured ? "active" : "inactive"}`}
-                        onClick={() => toggleFeatured(item)}
+                        className={`badge badge-${item.is_active ? "active" : "inactive"}`}
+                        onClick={() => toggleActive(item)}
                         style={{ cursor: "pointer", border: "none" }}
                       >
-                        {item.is_featured ? "Featured" : "Biasa"}
+                        {item.is_active ? "Tampil" : "Sembunyi"}
                       </button>
                     </td>
                     <td>
@@ -403,12 +403,12 @@ export default function AdminTestimonialsPage() {
                 <label className="form-check">
                   <input
                     type="checkbox"
-                    checked={formData.is_featured}
+                    checked={formData.is_active}
                     onChange={(e) =>
-                      updateField("is_featured", e.target.checked)
+                      updateField("is_active", e.target.checked)
                     }
                   />
-                  Tampilkan sebagai testimonial unggulan
+                  Tampilkan di landing page (nonaktif = tersembunyi)
                 </label>
               </div>
             </div>

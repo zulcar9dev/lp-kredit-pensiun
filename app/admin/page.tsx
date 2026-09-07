@@ -4,22 +4,31 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { CircleNotch } from "@phosphor-icons/react/dist/ssr";
 import { fetchLeads, type LeadRow } from "@/lib/actions/leads";
+import { fetchWaClicks } from "@/lib/actions/wa-clicks";
 import { formatRupiah } from "@/lib/format";
 import {
   fetchBankProducts,
   type BankProductRow,
 } from "@/lib/actions/bank-products";
+import type { WaClick } from "@/lib/types/database";
+
+const RELATION_LABELS: Record<string, string> = {
+  sendiri: "Diri sendiri",
+  orang_tua: "Orang tua",
+};
 
 export default function AdminDashboardPage() {
   const [leads, setLeads] = useState<LeadRow[]>([]);
   const [banks, setBanks] = useState<BankProductRow[]>([]);
+  const [waClicks, setWaClicks] = useState<WaClick[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([fetchLeads({ limit: 0 }), fetchBankProducts()])
-      .then(([l, b]) => {
+    Promise.all([fetchLeads({ limit: 0 }), fetchBankProducts(), fetchWaClicks()])
+      .then(([l, b, c]) => {
         setLeads(l.rows);
         setBanks(b);
+        setWaClicks(c);
       })
       .catch((err) => {
         console.error("Gagal memuat data dashboard:", err);
@@ -44,38 +53,44 @@ export default function AdminDashboardPage() {
   ).length;
   const totalLeads = leads.length;
   const newLeads = leads.filter((l) => l.status === "new").length;
-  const processedLeads = leads.filter((l) => l.status === "processed").length;
-  const closedLeads = leads.filter((l) => l.status === "closed").length;
+  const qualifiedLeads = leads.filter((l) => l.status === "qualified").length;
+  const approvedLeads = leads.filter((l) => l.status === "approved").length;
   const activeBanks = banks.filter((b) => b.is_active).length;
 
-  const provinceCounts = leads.reduce(
+  const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const waClicksWeek = waClicks.filter(
+    (c) => new Date(c.created_at).getTime() >= weekAgo
+  ).length;
+
+  const relationCounts = leads.reduce(
     (acc, lead) => {
-      acc[lead.province] = (acc[lead.province] || 0) + 1;
+      const key = lead.applicant_relation || "sendiri";
+      acc[key] = (acc[key] || 0) + 1;
       return acc;
     },
     {} as Record<string, number>
   );
-  const sortedProvinces = Object.entries(provinceCounts)
-    .sort(([, a], [, b]) => b - a)
-    .slice(0, 6);
-  const maxProvinceCount = Math.max(
-    ...sortedProvinces.map(([, c]) => c),
+  const sortedRelations = Object.entries(relationCounts).sort(
+    ([, a], [, b]) => b - a
+  );
+  const maxRelationCount = Math.max(
+    ...sortedRelations.map(([, c]) => c),
     1
   );
 
-  const bankCounts = leads.reduce(
-    (acc, lead) => {
-      const bank = lead.interested_bank || "Belum ditentukan";
-      acc[bank] = (acc[bank] || 0) + 1;
+  const clickCampaignCounts = waClicks.reduce(
+    (acc, click) => {
+      const campaign = click.utm_campaign || "Direct / Organic";
+      acc[campaign] = (acc[campaign] || 0) + 1;
       return acc;
     },
     {} as Record<string, number>
   );
-  const sortedBanks = Object.entries(bankCounts)
+  const sortedClickCampaigns = Object.entries(clickCampaignCounts)
     .sort(([, a], [, b]) => b - a)
-    .slice(0, 8);
-  const maxBankCount = Math.max(
-    ...sortedBanks.map(([, c]) => c),
+    .slice(0, 6);
+  const maxClickCampaignCount = Math.max(
+    ...sortedClickCampaigns.map(([, c]) => c),
     1
   );
 
@@ -98,20 +113,26 @@ export default function AdminDashboardPage() {
   const statusCounts = {
     new: leads.filter((l) => l.status === "new").length,
     contacted: leads.filter((l) => l.status === "contacted").length,
-    processed: leads.filter((l) => l.status === "processed").length,
-    closed: leads.filter((l) => l.status === "closed").length,
+    qualified: leads.filter((l) => l.status === "qualified").length,
+    approved: leads.filter((l) => l.status === "approved").length,
+    rejected: leads.filter((l) => l.status === "rejected").length,
+    invalid: leads.filter((l) => l.status === "invalid").length,
   };
   const statusColors = {
     new: "var(--navy-500)",
     contacted: "var(--amber-500)",
-    processed: "var(--accent)",
-    closed: "var(--emerald-500)",
+    qualified: "var(--accent)",
+    approved: "var(--emerald-500)",
+    rejected: "var(--red-500)",
+    invalid: "var(--stone-400)",
   };
   const statusLabels = {
     new: "Baru",
     contacted: "Dihubungi",
-    processed: "Proses",
-    closed: "Selesai",
+    qualified: "Kualifikasi",
+    approved: "Disetujui",
+    rejected: "Ditolak",
+    invalid: "Invalid",
   };
   const totalForDonut = Object.values(statusCounts).reduce((a, b) => a + b, 0);
 
@@ -164,6 +185,13 @@ export default function AdminDashboardPage() {
           <div className="stat-note">Masuk hari ini</div>
         </div>
         <div className="stat-card">
+          <div className="stat-label">Klik WA (7 hari)</div>
+          <div className="stat-value" style={{ color: "var(--wa, #25d366)" }}>
+            {waClicksWeek}
+          </div>
+          <div className="stat-note">Klik CTA WhatsApp</div>
+        </div>
+        <div className="stat-card">
           <div className="stat-label">Leads Baru</div>
           <div className="stat-value" style={{ color: "var(--navy-500)" }}>
             {newLeads}
@@ -171,15 +199,15 @@ export default function AdminDashboardPage() {
           <div className="stat-note">Belum dihubungi</div>
         </div>
         <div className="stat-card">
-          <div className="stat-label">Dalam Proses</div>
+          <div className="stat-label">Kualifikasi</div>
           <div className="stat-value" style={{ color: "var(--amber-700)" }}>
-            {processedLeads}
+            {qualifiedLeads}
           </div>
-          <div className="stat-note">Sedang diproses bank</div>
+          <div className="stat-note">Layak diajukan ke bank</div>
         </div>
         <div className="stat-card">
-          <div className="stat-label">Selesai (Cair)</div>
-          <div className="stat-value stat-emerald">{closedLeads}</div>
+          <div className="stat-label">Disetujui (Cair)</div>
+          <div className="stat-value stat-emerald">{approvedLeads}</div>
           <div className="stat-note">Kredit sudah cair</div>
         </div>
       </div>
@@ -187,20 +215,22 @@ export default function AdminDashboardPage() {
       <div className="dashboard-grid">
         <div className="card">
           <div className="card-header">
-            <h3 className="card-title">Leads per Provinsi</h3>
+            <h3 className="card-title">Distribusi Pengajuan</h3>
           </div>
           <div className="chart-bar-list">
-            {sortedProvinces.length === 0 && (
+            {sortedRelations.length === 0 && (
               <p className="text-muted" style={{ padding: "1rem", fontSize: "var(--text-sm)" }}>Belum ada data</p>
             )}
-            {sortedProvinces.map(([province, count]) => (
-              <div key={province} className="chart-bar-row">
-                <div className="chart-bar-label">{province}</div>
+            {sortedRelations.map(([relation, count]) => (
+              <div key={relation} className="chart-bar-row">
+                <div className="chart-bar-label">
+                  {RELATION_LABELS[relation] || relation}
+                </div>
                 <div className="chart-bar-track">
                   <div
                     className="chart-bar-fill accent"
                     style={{
-                      width: `${(count / maxProvinceCount) * 100}%`,
+                      width: `${(count / maxRelationCount) * 100}%`,
                     }}
                   >
                     <span className="chart-bar-count">{count}</span>
@@ -243,20 +273,20 @@ export default function AdminDashboardPage() {
       <div className="dashboard-grid" style={{ marginTop: "24px" }}>
         <div className="card">
           <div className="card-header">
-            <h3 className="card-title">Leads per Bank Pilihan</h3>
+            <h3 className="card-title">Klik WhatsApp per Kampanye</h3>
           </div>
           <div className="chart-bar-list">
-            {sortedBanks.length === 0 && (
+            {sortedClickCampaigns.length === 0 && (
               <p className="text-muted" style={{ padding: "1rem", fontSize: "var(--text-sm)" }}>Belum ada data</p>
             )}
-            {sortedBanks.map(([bank, count]) => (
-              <div key={bank} className="chart-bar-row">
-                <div className="chart-bar-label">{bank}</div>
+            {sortedClickCampaigns.map(([campaign, count]) => (
+              <div key={campaign} className="chart-bar-row">
+                <div className="chart-bar-label">{campaign}</div>
                 <div className="chart-bar-track">
                   <div
                     className="chart-bar-fill wa"
                     style={{
-                      width: `${(count / maxBankCount) * 100}%`,
+                      width: `${(count / maxClickCampaignCount) * 100}%`,
                     }}
                   >
                     <span className="chart-bar-count">{count}</span>
@@ -333,9 +363,13 @@ export default function AdminDashboardPage() {
                         ? "Baru"
                         : lead.status === "contacted"
                           ? "Dihubungi"
-                          : lead.status === "processed"
-                            ? "Proses"
-                            : "Selesai"}
+                          : lead.status === "qualified"
+                            ? "Kualifikasi"
+                            : lead.status === "approved"
+                              ? "Disetujui"
+                              : lead.status === "rejected"
+                                ? "Ditolak"
+                                : "Invalid"}
                     </span>
                   </td>
                   <td className="text-muted text-sm">

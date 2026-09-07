@@ -10,12 +10,26 @@ export const WA_PREFILLED_MESSAGE =
 export const PENSION_TYPES = ["TNI/Polri", "PNS", "BUMN", "Swasta"] as const;
 export type PensionType = (typeof PENSION_TYPES)[number];
 
+// PRD §3.3 — chips preset nominal (tanpa slider, ramah motorik lansia)
 export const LOAN_MIN = 10_000_000;
 export const LOAN_MAX = 500_000_000;
-export const LOAN_STEP = 10_000_000;
-export const LOAN_DEFAULT = 50_000_000;
+export const LOAN_PRESETS = [
+  25_000_000,
+  50_000_000,
+  100_000_000,
+  200_000_000,
+  300_000_000,
+] as const;
 
-export const BANK_DEFAULT_OPTION = "Belum tahu, mohon dicarikan yang cocok";
+export const APPLICANT_RELATION_OPTIONS = [
+  { value: "sendiri", label: "Untuk diri sendiri" },
+  { value: "orang_tua", label: "Untuk orang tua" },
+] as const;
+
+export const CONSENT_TEXT =
+  "Saya setuju data saya (nama, nomor WhatsApp) diproses untuk dihubungi terkait informasi produk kredit pensiun.";
+
+export const WA_OFFICE_HOURS = "08.00–21.00 WIB";
 
 export const LEGAL = {
   agentDisclaimer:

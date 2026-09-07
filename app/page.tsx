@@ -72,7 +72,7 @@ export default async function Home() {
         <HowItWorks />
         <ScrollTracker />
         <Testimonials items={testimonials} />
-        <LeadFormSection bankProducts={bankProducts} />
+        <LeadFormSection />
         <Faq items={faqs} />
       </main>
       <SiteFooter />

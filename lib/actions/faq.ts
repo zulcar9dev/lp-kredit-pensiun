@@ -57,9 +57,10 @@ export async function deleteFaq(
   id: string
 ): Promise<{ ok: boolean; error?: string }> {
   await requireAdmin();
+  // Soft delete — section landing otomatis menyembunyikan baris ter-soft-delete
   const { error } = await getInsforgeAdmin().database
     .from("faq")
-    .delete()
+    .update({ deleted_at: new Date().toISOString() })
     .eq("id", id);
 
   if (error) {
