@@ -27,7 +27,15 @@ import { generateEventId, trackPixel } from "@/lib/pixel";
 import { FieldError, inputClass, labelClass } from "@/components/field";
 import { WaButton } from "@/components/wa-button";
 
-export function LeadForm({ waLink }: { waLink: string }) {
+export function LeadForm({
+  waLink,
+  idPrefix = "lead",
+}: {
+  waLink: string;
+  // Prefix ID agar dua form sehalaman (Hero + section #ajukan) tidak
+  // punya id duplikat. Hero memakai idPrefix="hero".
+  idPrefix?: string;
+}) {
   const [status, setStatus] = useState<"idle" | "submitting" | "success">(
     "idle",
   );
@@ -36,6 +44,7 @@ export function LeadForm({ waLink }: { waLink: string }) {
   const [successName, setSuccessName] = useState("");
   const [successLeadId, setSuccessLeadId] = useState<string | null>(null);
   const honeypotRef = useRef<HTMLInputElement>(null);
+  const fid = (name: string) => `${idPrefix}-${name}`;
 
   const {
     register,
@@ -169,9 +178,9 @@ export function LeadForm({ waLink }: { waLink: string }) {
         aria-hidden="true"
         className="absolute -left-[9999px] top-auto size-px overflow-hidden"
       >
-        <label htmlFor="lead-website">Website</label>
+        <label htmlFor={fid("website")}>Website</label>
         <input
-          id="lead-website"
+          id={fid("website")}
           name="website"
           type="text"
           tabIndex={-1}
@@ -182,11 +191,11 @@ export function LeadForm({ waLink }: { waLink: string }) {
 
       <div className="grid gap-5 sm:grid-cols-2">
         <div>
-          <label htmlFor="lead-name" className={`${labelClass} mb-1.5`}>
+          <label htmlFor={fid("name")} className={`${labelClass} mb-1.5`}>
             Nama Lengkap
           </label>
           <input
-            id="lead-name"
+            id={fid("name")}
             type="text"
             autoComplete="name"
             placeholder="Contoh: Budi Santoso"
@@ -198,11 +207,11 @@ export function LeadForm({ waLink }: { waLink: string }) {
         </div>
 
         <div>
-          <label htmlFor="lead-whatsapp" className={`${labelClass} mb-1.5`}>
+          <label htmlFor={fid("whatsapp")} className={`${labelClass} mb-1.5`}>
             No. WhatsApp
           </label>
           <input
-            id="lead-whatsapp"
+            id={fid("whatsapp")}
             type="tel"
             inputMode="tel"
             autoComplete="tel"
@@ -215,12 +224,12 @@ export function LeadForm({ waLink }: { waLink: string }) {
         </div>
 
         <div>
-          <label htmlFor="lead-pension" className={`${labelClass} mb-1.5`}>
+          <label htmlFor={fid("pension")} className={`${labelClass} mb-1.5`}>
             Jenis Pensiun
           </label>
           <div className="relative">
             <select
-              id="lead-pension"
+              id={fid("pension")}
               aria-invalid={!!errors.pensionType}
               className={`${inputClass} appearance-none pr-11 ${watch("pensionType") ? "" : "text-stone-500"}`}
               {...register("pensionType")}
@@ -360,11 +369,11 @@ export function LeadForm({ waLink }: { waLink: string }) {
 
       <div>
         <label
-          htmlFor="lead-consent"
+          htmlFor={fid("consent")}
           className="flex cursor-pointer items-start gap-3 rounded-xl border border-stone-200 bg-stone-50 p-4"
         >
           <input
-            id="lead-consent"
+            id={fid("consent")}
             type="checkbox"
             aria-invalid={!!errors.consent}
             className="mt-0.5 size-5 shrink-0 accent-brand-600"

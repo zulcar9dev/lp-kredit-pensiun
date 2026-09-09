@@ -6,6 +6,7 @@ import { CircleNotch } from "@phosphor-icons/react/dist/ssr";
 import { fetchLeads, type LeadRow } from "@/lib/actions/leads";
 import { fetchWaClicks } from "@/lib/actions/wa-clicks";
 import { formatRupiah } from "@/lib/format";
+import { pensionDbToLabel } from "@/lib/constants";
 import {
   fetchBankProducts,
   type BankProductRow,
@@ -52,6 +53,20 @@ export default function AdminDashboardPage() {
       }).format(new Date(l.created_at)) === todayStr
   ).length;
   const totalLeads = leads.length;
+  // PRD §6.5: kartu "bulan ini" (KPI volume 10–25 lead/bln) — zona Asia/Jakarta
+  const monthStr = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Jakarta",
+    year: "numeric",
+    month: "2-digit",
+  }).format(new Date());
+  const monthLeads = leads.filter(
+    (l) =>
+      new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Asia/Jakarta",
+        year: "numeric",
+        month: "2-digit",
+      }).format(new Date(l.created_at)) === monthStr
+  ).length;
   const newLeads = leads.filter((l) => l.status === "new").length;
   const qualifiedLeads = leads.filter((l) => l.status === "qualified").length;
   const approvedLeads = leads.filter((l) => l.status === "approved").length;
@@ -78,6 +93,23 @@ export default function AdminDashboardPage() {
     1
   );
 
+  // PRD §6.5: chart distribusi jenis pensiun (label ramah via mapping DB)
+  const pensionCounts = leads.reduce(
+    (acc, lead) => {
+      const key = lead.pension_type || "-";
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>
+  );
+  const sortedPensions = Object.entries(pensionCounts).sort(
+    ([, a], [, b]) => b - a
+  );
+  const maxPensionCount = Math.max(
+    ...sortedPensions.map(([, c]) => c),
+    1
+  );
+
   const clickCampaignCounts = waClicks.reduce(
     (acc, click) => {
       const campaign = click.utm_campaign || "Direct / Organic";
@@ -85,13 +117,6 @@ export default function AdminDashboardPage() {
       return acc;
     },
     {} as Record<string, number>
-  );
-  const sortedClickCampaigns = Object.entries(clickCampaignCounts)
-    .sort(([, a], [, b]) => b - a)
-    .slice(0, 6);
-  const maxClickCampaignCount = Math.max(
-    ...sortedClickCampaigns.map(([, c]) => c),
-    1
   );
 
   const campaignCounts = leads.reduce(
@@ -102,13 +127,21 @@ export default function AdminDashboardPage() {
     },
     {} as Record<string, number>
   );
-  const sortedCampaigns = Object.entries(campaignCounts)
-    .sort(([, a], [, b]) => b - a)
-    .slice(0, 6);
-  const maxCampaignCount = Math.max(
-    ...sortedCampaigns.map(([, c]) => c),
-    1
-  );
+
+  // PRD §6.5: tabel gabungan leads & klik WA per campaign (union kedua sumber)
+  const campaignRows = Array.from(
+    new Set([
+      ...Object.keys(clickCampaignCounts),
+      ...Object.keys(campaignCounts),
+    ])
+  )
+    .map((campaign) => ({
+      campaign,
+      leads: campaignCounts[campaign] ?? 0,
+      clicks: clickCampaignCounts[campaign] ?? 0,
+    }))
+    .sort((a, b) => b.leads - a.leads || b.clicks - a.clicks)
+    .slice(0, 10);
 
   const statusCounts = {
     new: leads.filter((l) => l.status === "new").length,
@@ -185,6 +218,11 @@ export default function AdminDashboardPage() {
           <div className="stat-note">Masuk hari ini</div>
         </div>
         <div className="stat-card">
+          <div className="stat-label">Leads Bulan Ini</div>
+          <div className="stat-value stat-accent">{monthLeads}</div>
+          <div className="stat-note">Masuk bulan berjalan</div>
+        </div>
+        <div className="stat-card">
           <div className="stat-label">Klik WA (7 hari)</div>
           <div className="stat-value" style={{ color: "var(--wa, #25d366)" }}>
             {waClicksWeek}
@@ -238,6 +276,32 @@ export default function AdminDashboardPage() {
                 </div>
               </div>
             ))}
+            <p
+              className="text-muted"
+              style={{ padding: "0.75rem 1rem 0", fontSize: "var(--text-sm)", fontWeight: 700 }}
+            >
+              Jenis Pensiun
+            </p>
+            {sortedPensions.length === 0 && (
+              <p className="text-muted" style={{ padding: "1rem", fontSize: "var(--text-sm)" }}>Belum ada data</p>
+            )}
+            {sortedPensions.map(([pension, count]) => (
+              <div key={pension} className="chart-bar-row">
+                <div className="chart-bar-label">
+                  {pensionDbToLabel(pension)}
+                </div>
+                <div className="chart-bar-track">
+                  <div
+                    className="chart-bar-fill accent"
+                    style={{
+                      width: `${(count / maxPensionCount) * 100}%`,
+                    }}
+                  >
+                    <span className="chart-bar-count">{count}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -270,57 +334,36 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      <div className="dashboard-grid" style={{ marginTop: "24px" }}>
-        <div className="card">
-          <div className="card-header">
-            <h3 className="card-title">Klik WhatsApp per Kampanye</h3>
-          </div>
-          <div className="chart-bar-list">
-            {sortedClickCampaigns.length === 0 && (
-              <p className="text-muted" style={{ padding: "1rem", fontSize: "var(--text-sm)" }}>Belum ada data</p>
-            )}
-            {sortedClickCampaigns.map(([campaign, count]) => (
-              <div key={campaign} className="chart-bar-row">
-                <div className="chart-bar-label">{campaign}</div>
-                <div className="chart-bar-track">
-                  <div
-                    className="chart-bar-fill wa"
-                    style={{
-                      width: `${(count / maxClickCampaignCount) * 100}%`,
-                    }}
-                  >
-                    <span className="chart-bar-count">{count}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+      <div className="card" style={{ marginTop: "24px" }}>
+        <div className="card-header">
+          <h3 className="card-title">Performa per Kampanye</h3>
         </div>
-
-        <div className="card">
-          <div className="card-header">
-            <h3 className="card-title">Leads per Kampanye UTM</h3>
-          </div>
-          <div className="chart-bar-list">
-            {sortedCampaigns.length === 0 && (
-              <p className="text-muted" style={{ padding: "1rem", fontSize: "var(--text-sm)" }}>Belum ada data</p>
-            )}
-            {sortedCampaigns.map(([campaign, count]) => (
-              <div key={campaign} className="chart-bar-row">
-                <div className="chart-bar-label">{campaign}</div>
-                <div className="chart-bar-track">
-                  <div
-                    className="chart-bar-fill accent"
-                    style={{
-                      width: `${(count / maxCampaignCount) * 100}%`,
-                    }}
-                  >
-                    <span className="chart-bar-count">{count}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+        <div className="table-wrap">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Kampanye</th>
+                <th>Leads</th>
+                <th>Klik WA</th>
+              </tr>
+            </thead>
+            <tbody>
+              {campaignRows.length === 0 && (
+                <tr>
+                  <td colSpan={3} className="text-muted" style={{ textAlign: "center", padding: "2rem" }}>
+                    Belum ada data
+                  </td>
+                </tr>
+              )}
+              {campaignRows.map((row) => (
+                <tr key={row.campaign}>
+                  <td className="table-link">{row.campaign}</td>
+                  <td>{row.leads}</td>
+                  <td>{row.clicks}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -355,7 +398,7 @@ export default function AdminDashboardPage() {
                 <tr key={lead.id}>
                   <td className="table-link">{lead.name}</td>
                   <td className="table-mono">{lead.whatsapp}</td>
-                  <td>{lead.pension_type}</td>
+                  <td>{pensionDbToLabel(lead.pension_type)}</td>
                   <td>{formatRupiah(lead.loan_amount)}</td>
                   <td>
                     <span className={`badge badge-${lead.status}`}>

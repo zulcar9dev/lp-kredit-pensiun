@@ -1,5 +1,6 @@
 import { WaButton } from "@/components/wa-button";
 import { TelLink } from "@/components/tel-link";
+import { LeadForm } from "@/components/lead-form";
 import { getAppSettings } from "@/lib/settings";
 import { buildWaLink } from "@/lib/wa";
 import { WA_OFFICE_HOURS } from "@/lib/constants";
@@ -44,13 +45,13 @@ export async function Hero() {
         <div className="reveal reveal-d1">
           <div className="rounded-xl border border-stone-200 bg-white p-6 shadow-card-lg md:p-8">
             <h2 className="text-2xl tracking-tight">
-              Siap membantu Bapak/Ibu
+              Isi formulir singkat ini
             </h2>
             <p className="mb-6 mt-2 text-stone-600">
-              Konsultasi gratis, tanpa komitmen. Cukup chat WhatsApp, saya
-              bantu urus dari awal sampai cair.
+              Pendek saja. Setelah dikirim, saya hubungi lewat WhatsApp
+              untuk konsultasi gratis.
             </p>
-            <WaButton waLink={waLink} size="lg" className="w-full" />
+            <LeadForm waLink={waLink} idPrefix="hero" />
           </div>
         </div>
       </div>

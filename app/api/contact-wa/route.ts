@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getInsforgeAdmin } from "@/lib/insforge";
 import { getAppSettings } from "@/lib/settings";
-import { WA_NUMBER_INTL } from "@/lib/constants";
+import { WA_NUMBER_INTL, WA_PREFILLED_MESSAGE } from "@/lib/constants";
 
 // PRD §4.1: rate limit endpoint redirect 30 / IP / jam (anti spam klik yang
 // membakar event CAPI). In-memory cukup untuk satu instance deployment.
@@ -96,6 +96,8 @@ async function sendContactToMetaCAPI(opts: {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
+        // PRD §4.1 fail-safe: jangan biarkan Meta yang lambat menahan redirect
+        signal: AbortSignal.timeout(3000),
       },
     );
     if (!resp.ok) {
@@ -131,17 +133,26 @@ export async function GET(req: NextRequest) {
   };
 
   // Selalu redirect (fail-safe) — tracking dilakukan best-effort.
+  // BACKEND-7: getAppSettings() bisa throw (DB ngadat) — tangkap agar
+  // respons tetap 302 ke nomor fallback, bukan 500.
   async function redirectToWhatsApp(): Promise<NextResponse> {
-    const settings = await getAppSettings();
-    const waNumber = /^62[0-9]{9,13}$/.test(settings.waNumberIntl)
-      ? settings.waNumberIntl
-      : WA_NUMBER_INTL;
-    const greeting = utm.utm_campaign
-      ? `${settings.waGreeting}\n\n(Dikirim dari halaman web — kampanye: ${utm.utm_campaign})`
-      : settings.waGreeting;
+    let waNumber = WA_NUMBER_INTL;
+    let greeting = WA_PREFILLED_MESSAGE;
+    try {
+      const settings = await getAppSettings();
+      if (/^62[0-9]{9,13}$/.test(settings.waNumberIntl)) {
+        waNumber = settings.waNumberIntl;
+      }
+      greeting = settings.waGreeting;
+    } catch (err) {
+      console.error("contact-wa settings failed, pakai fallback:", err);
+    }
+    const text = utm.utm_campaign
+      ? `${greeting}\n\n(Dikirim dari halaman web — kampanye: ${utm.utm_campaign})`
+      : greeting;
     return NextResponse.redirect(
       new URL(
-        `https://wa.me/${waNumber}?text=${encodeURIComponent(greeting)}`,
+        `https://wa.me/${waNumber}?text=${encodeURIComponent(text)}`,
       ),
       302,
     );
@@ -192,7 +203,9 @@ export async function GET(req: NextRequest) {
       // abaikan — event tetap dikirim tanpa ph
     }
   }
-  await sendContactToMetaCAPI({
+  // BACKEND-6: CAPI dikirim fire-and-forget (tidak di-await) agar Meta
+  // yang lambat tidak menahan redirect 302. Error sudah ditangani di dalam.
+  void sendContactToMetaCAPI({
     eventId: eid,
     fbp,
     fbc,

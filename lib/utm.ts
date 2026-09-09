@@ -28,7 +28,10 @@ export function captureUtm(): UtmParams {
 
   if (Object.keys(collected).length > 0) {
     try {
-      window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(collected));
+      // BACKEND-3: gabung (merge), bukan timpa — kunjungan dengan 1 UTM
+      // tak menghapus UTM lain yang sudah tersimpan. Nilai baru menang.
+      const merged: UtmParams = { ...readStoredUtm(), ...collected };
+      window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
     } catch {
       // penyimpanan tidak tersedia, biarkan kosong
     }

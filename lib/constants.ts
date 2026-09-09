@@ -68,10 +68,12 @@ export const CONSENT_TEXT =
 export const WA_OFFICE_HOURS = "08.00–21.00 WIB";
 
 export const LEGAL = {
+  // PRD §7.1 — teks verbatim (dipakai footer + terms; jangan dipersingkat
+  // tanpa revisi PRD karena menentukan lolos compliance sign-off QA §9.2)
   agentDisclaimer:
-    "Website ini dikelola oleh agen pemasaran independen dan bukan bagian dari bank mana pun. Persetujuan kredit sepenuhnya merupakan wewenang bank.",
+    "Website ini dikelola oleh agen pemasaran independen dan bukan merupakan aplikasi resmi perbankan. Persetujuan pinjaman, penetapan bunga, dan pencairan dana sepenuhnya merupakan wewenang dari lembaga keuangan / bank mitra yang bersangkutan.",
   ojkNeutralLine:
-    "Produk kredit ditawarkan oleh bank mitra yang terdaftar dan diawasi oleh Otoritas Jasa Keuangan (OJK).",
+    "Seluruh produk kredit pensiun ditawarkan oleh bank mitra yang terdaftar dan diawasi oleh Otoritas Jasa Keuangan (OJK).",
   indicativeNote: "Angka indikatif, syarat dan ketentuan berlaku.",
   generalDisclaimer:
     "Informasi di halaman ini bersifat umum dan bukan penawaran resmi.",

@@ -2,6 +2,7 @@
 
 import { WhatsappLogo } from "@phosphor-icons/react/dist/ssr";
 import type { MouseEvent } from "react";
+import { useEffect, useState } from "react";
 import { trackPixel, generateEventId } from "@/lib/pixel";
 import { readFbpCookie, readStoredFbc, readStoredUtm } from "@/lib/utm";
 import { buildContactWaUrl, CONTACT_WA_PATH } from "@/lib/wa";
@@ -58,10 +59,19 @@ export function WaButton({
   // internal — server membuatkan event_id bila JS nonaktif. waLink (wa.me)
   // tidak lagi dipakai sebagai href.
   void waLink;
-  const fallbackHref =
-    leadRef != null && leadRef !== ""
-      ? `${CONTACT_WA_PATH}?lead=${encodeURIComponent(leadRef)}`
-      : CONTACT_WA_PATH;
+  // FRONTEND-15: fallback dirakit saat mount dengan eid+UTM+fbc dari sesi,
+  // sehingga middle-click / buka-tab-baru tetap membawa atribusi.
+  const [fallbackHref, setFallbackHref] = useState<string>(CONTACT_WA_PATH);
+  useEffect(() => {
+    setFallbackHref(
+      buildContactWaUrl({
+        eid: generateEventId(),
+        utm: readStoredUtm(),
+        fbc: readStoredFbc(),
+        leadRef: leadRef ?? null,
+      }),
+    );
+  }, [leadRef]);
 
   return (
     <a
