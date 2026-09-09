@@ -3,6 +3,7 @@
 import { getInsforgeAdmin } from "@/lib/insforge";
 import { requireAdmin } from "@/lib/admin-auth";
 import { normalizeToE164 } from "@/lib/phone";
+import { pensionLabelToDb } from "@/lib/constants";
 import type { Lead } from "@/lib/types/database";
 
 export type LeadRow = Omit<Lead, "created_at" | "updated_at"> & {
@@ -156,10 +157,15 @@ export async function updateLead(
   >
 ): Promise<{ ok: boolean; error?: string }> {
   await requireAdmin();
+  // PRD §5: normalisasi label ("TNI/Polri") ke snake_case ("tni_polri")
+  const dbPension = payload.pension_type
+    ? (pensionLabelToDb(payload.pension_type) ?? payload.pension_type)
+    : undefined;
   const { error } = await getInsforgeAdmin().database
     .from("leads")
     .update({
       ...payload,
+      ...(dbPension ? { pension_type: dbPension } : {}),
       ...(payload.whatsapp
         ? { whatsapp: normalizeToE164(payload.whatsapp) }
         : {}),
@@ -183,13 +189,15 @@ export async function createLead(
     >
 ): Promise<{ ok: boolean; error?: string; id?: string }> {
   await requireAdmin();
+  const dbPension =
+    pensionLabelToDb(payload.pension_type) ?? payload.pension_type;
   const { data, error } = await getInsforgeAdmin().database
     .from("leads")
     .insert([
       {
         name: payload.name,
         whatsapp: normalizeToE164(payload.whatsapp),
-        pension_type: payload.pension_type,
+        pension_type: dbPension,
         applicant_relation: payload.applicant_relation ?? "sendiri",
         consent: true,
         consent_at: new Date().toISOString(),

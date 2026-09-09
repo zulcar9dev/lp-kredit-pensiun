@@ -88,7 +88,7 @@ export async function SiteFooter() {
           <p>&copy; 2026 {settings.siteTitle}. Halaman informasi agen independen.</p>
           <div className="flex gap-6">
             <Link
-              href="/privacy"
+              href="/privacy-policy"
               className="font-medium underline decoration-stone-400 underline-offset-4 transition-colors hover:text-navy-900"
             >
               Kebijakan Privasi

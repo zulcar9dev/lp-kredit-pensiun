@@ -1,5 +1,6 @@
 import Script from "next/script";
 import { PIXEL_ID } from "@/lib/pixel";
+import { PIXEL_CONTENT_NAME } from "@/lib/constants";
 
 export function PixelScript() {
   if (!PIXEL_ID) return null;
@@ -16,7 +17,16 @@ export function PixelScript() {
         s.parentNode.insertBefore(t,s)}(window, document,'script',
         'https://connect.facebook.net/en_US/fbevents.js');
         fbq('init', '${PIXEL_ID}');
-        fbq('track', 'PageView');
+        // PRD §4.1: PageView memakai event_id agar bisa didedup dengan CAPI.
+        (function () {
+          var eid = (window.crypto && window.crypto.randomUUID)
+            ? window.crypto.randomUUID()
+            : ('pv-' + Date.now() + '-' + Math.random().toString(36).slice(2, 12));
+          try {
+            window.sessionStorage.setItem('lp-pensiunku:pageview-eid', eid);
+          } catch (e) {}
+          fbq('track', 'PageView', { content_name: '${PIXEL_CONTENT_NAME}' }, { eventID: eid });
+        })();
       `}
     </Script>
   );

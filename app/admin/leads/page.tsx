@@ -22,7 +22,11 @@ import {
   type LeadFilters,
 } from "@/lib/actions/leads";
 import { formatRupiah } from "@/lib/format";
-import { PENSION_TYPES } from "@/lib/constants";
+import {
+  PENSION_TYPE_DB,
+  pensionDbToLabel,
+  pensionLabelToDb,
+} from "@/lib/constants";
 
 const APPLICANT_RELATION_LABELS: Record<string, string> = {
   sendiri: "Diri sendiri",
@@ -32,7 +36,7 @@ const APPLICANT_RELATION_LABELS: Record<string, string> = {
 const EMPTY_FORM = {
   name: "",
   whatsapp: "",
-  pension_type: "PNS" as string,
+  pension_type: "pns" as string,
   applicant_relation: "sendiri" as LeadRow["applicant_relation"],
   loan_amount: null as number | null,
   status: "new" as LeadRow["status"],
@@ -136,7 +140,7 @@ export default function AdminLeadsPage() {
     setFormData({
       name: lead.name,
       whatsapp: lead.whatsapp,
-      pension_type: lead.pension_type,
+      pension_type: pensionLabelToDb(lead.pension_type) ?? "pns",
       applicant_relation: lead.applicant_relation ?? "sendiri",
       loan_amount: lead.loan_amount ?? null,
       status: lead.status,
@@ -235,7 +239,7 @@ export default function AdminLeadsPage() {
       const data = rows.map((l) => ({
         Nama: l.name,
         WhatsApp: l.whatsapp,
-        "Jenis Pensiun": l.pension_type,
+        "Jenis Pensiun": pensionDbToLabel(l.pension_type),
         "Pengajuan Untuk": APPLICANT_RELATION_LABELS[l.applicant_relation] || l.applicant_relation,
         "Pinjaman (Rp)": l.loan_amount ?? 0,
         Status: statusLabel(l.status),
@@ -336,9 +340,9 @@ export default function AdminLeadsPage() {
             }}
           >
             <option value="all">Semua Jenis</option>
-            {PENSION_TYPES.map((p) => (
+            {PENSION_TYPE_DB.map((p) => (
               <option key={p} value={p}>
-                {p}
+                {pensionDbToLabel(p)}
               </option>
             ))}
           </select>
@@ -454,7 +458,7 @@ export default function AdminLeadsPage() {
                   <tr key={lead.id}>
                     <td className="table-link">{lead.name}</td>
                     <td className="table-mono">{lead.whatsapp}</td>
-                    <td>{lead.pension_type}</td>
+                    <td>{pensionDbToLabel(lead.pension_type)}</td>
                     <td>
                       {APPLICANT_RELATION_LABELS[lead.applicant_relation] ||
                         lead.applicant_relation}
@@ -567,9 +571,9 @@ export default function AdminLeadsPage() {
                       updateField("pension_type", e.target.value)
                     }
                   >
-                    {PENSION_TYPES.map((p) => (
+                    {PENSION_TYPE_DB.map((p) => (
                       <option key={p} value={p}>
-                        {p}
+                        {pensionDbToLabel(p)}
                       </option>
                     ))}
                   </select>
@@ -687,7 +691,7 @@ export default function AdminLeadsPage() {
                   <div className="text-xs text-muted font-semibold">
                     Jenis Pensiun
                   </div>
-                  <div className="font-bold">{selectedLead.pension_type}</div>
+                  <div className="font-bold">{pensionDbToLabel(selectedLead.pension_type)}</div>
                 </div>
                 <div>
                   <div className="text-xs text-muted font-semibold">

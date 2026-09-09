@@ -46,6 +46,8 @@ export interface LeadPayload extends LeadData {
   event_id?: string;
   fbp?: string | null;
   fbc?: string | null;
+  // Honeypot anti-bot (dicek server; kosong untuk manusia)
+  website?: string;
   utm_source?: string;
   utm_medium?: string;
   utm_campaign?: string;

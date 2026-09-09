@@ -29,18 +29,41 @@ function shortText(v: string | null, max: number): string | null {
   return v.trim().slice(0, max);
 }
 
+async function sha256Hex(message: string): Promise<string> {
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(message),
+  );
+  return Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
 async function sendContactToMetaCAPI(opts: {
   eventId: string;
   fbp: string | null;
   fbc: string | null;
   ip: string;
   userAgent: string | null;
+  // PRD §4.2: phone (hash, jika ada) + UTM untuk atribusi kampanye
+  phoneE164?: string | null;
+  utm?: {
+    utm_source: string | null;
+    utm_medium: string | null;
+    utm_campaign: string | null;
+    utm_content: string | null;
+    utm_term: string | null;
+  };
 }): Promise<void> {
   const pixelId = process.env.META_PIXEL_ID;
   const accessToken = process.env.META_ACCESS_TOKEN;
   if (!pixelId || !accessToken) return;
 
   try {
+    // PRD §4.1: phone → E.164 tanpa "+" lalu SHA-256
+    const ph = opts.phoneE164
+      ? await sha256Hex(opts.phoneE164.trim().toLowerCase())
+      : undefined;
     const payload = {
       data: [
         {
@@ -48,12 +71,20 @@ async function sendContactToMetaCAPI(opts: {
           event_time: Math.floor(Date.now() / 1000),
           event_id: opts.eventId,
           user_data: {
+            ph,
             fbp: opts.fbp || undefined,
             fbc: opts.fbc || undefined,
             client_ip_address: opts.ip || undefined,
             client_user_agent: opts.userAgent || undefined,
           },
-          custom_data: { content_name: "Kredit Pensiun" },
+          custom_data: {
+            content_name: "Landing Page Kredit Pensiun",
+            utm_source: opts.utm?.utm_source || undefined,
+            utm_medium: opts.utm?.utm_medium || undefined,
+            utm_campaign: opts.utm?.utm_campaign || undefined,
+            utm_content: opts.utm?.utm_content || undefined,
+            utm_term: opts.utm?.utm_term || undefined,
+          },
           action_source: "website",
         },
       ],
@@ -142,8 +173,34 @@ export async function GET(req: NextRequest) {
     console.error("wa_clicks insert failed:", err);
   }
 
-  // 2. CAPI "Contact" server-side (dedup dengan Pixel via event_id)
-  await sendContactToMetaCAPI({ eventId: eid, fbp, fbc, ip, userAgent });
+  // 2. CAPI "Contact" server-side (dedup dengan Pixel via event_id).
+  // Jika klik berasal dari success-state (leadRef), ambil nomor lead untuk
+  // Advanced Matching (ph hash). Best-effort: gagal lookup tetap kirim event.
+  let phoneE164: string | null = null;
+  if (leadRef) {
+    try {
+      const { data } = await getInsforgeAdmin()
+        .database.from("leads")
+        .select("whatsapp")
+        .eq("id", leadRef)
+        .is("deleted_at", null)
+        .limit(1)
+        .single();
+      const w = (data as { whatsapp?: string } | null)?.whatsapp;
+      if (typeof w === "string" && w.trim() !== "") phoneE164 = w.trim();
+    } catch {
+      // abaikan — event tetap dikirim tanpa ph
+    }
+  }
+  await sendContactToMetaCAPI({
+    eventId: eid,
+    fbp,
+    fbc,
+    ip,
+    userAgent,
+    phoneE164,
+    utm,
+  });
 
   // 3. Redirect ke WhatsApp
   return redirectToWhatsApp();

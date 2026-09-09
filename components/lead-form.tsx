@@ -15,6 +15,7 @@ import {
   LOAN_MIN,
   LOAN_PRESETS,
   PENSION_TYPES,
+  PIXEL_CONTENT_NAME,
   WA_OFFICE_HOURS,
 } from "@/lib/constants";
 import { leadSchema, type LeadData, type LeadInput } from "@/lib/schema";
@@ -86,6 +87,7 @@ export function LeadForm({ waLink }: { waLink: string }) {
       applicantRelation: data.applicantRelation,
       loanAmount: data.loanAmount,
       consent: data.consent,
+      website: honeypotRef.current?.value ?? "",
       event_id: generateEventId(),
       fbp: readFbpCookie(),
       fbc: readStoredFbc(),
@@ -96,7 +98,7 @@ export function LeadForm({ waLink }: { waLink: string }) {
       if (result.eventId) {
         trackPixel(
           "Lead",
-          { content_name: "Kredit Pensiun" },
+          { content_name: PIXEL_CONTENT_NAME },
           { eventID: result.eventId },
         );
       }
@@ -371,7 +373,7 @@ export function LeadForm({ waLink }: { waLink: string }) {
           <span className="text-sm leading-relaxed text-stone-700">
             {CONSENT_TEXT}{" "}
             <a
-              href="/privacy"
+              href="/privacy-policy"
               className="font-semibold text-brand-700 underline"
             >
               Kebijakan Privasi

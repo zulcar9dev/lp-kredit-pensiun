@@ -2,6 +2,7 @@ export interface Lead {
   id: string;
   name: string;
   whatsapp: string; // E.164: 628…
+  // PRD §5: snake_case — 'pns' | 'tni_polri' | 'bumn' | 'swasta'
   pension_type: string;
   applicant_relation: "sendiri" | "orang_tua";
   province: string | null; // legacy (form v2 tidak lagi mengumpulkan)

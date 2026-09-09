@@ -4,8 +4,8 @@ import { WhatsappLogo } from "@phosphor-icons/react/dist/ssr";
 import type { MouseEvent } from "react";
 import { trackPixel, generateEventId } from "@/lib/pixel";
 import { readFbpCookie, readStoredFbc, readStoredUtm } from "@/lib/utm";
-import { buildContactWaUrl } from "@/lib/wa";
-import { CTA_LABEL } from "@/lib/constants";
+import { buildContactWaUrl, CONTACT_WA_PATH } from "@/lib/wa";
+import { CTA_LABEL, PIXEL_CONTENT_NAME } from "@/lib/constants";
 
 interface WaButtonProps {
   waLink: string;
@@ -43,7 +43,7 @@ export function WaButton({
     event.preventDefault();
 
     const eid = generateEventId();
-    trackPixel("Contact", { content_name: "Kredit Pensiun" }, { eventID: eid });
+    trackPixel("Contact", { content_name: PIXEL_CONTENT_NAME }, { eventID: eid });
 
     window.location.href = buildContactWaUrl({
       eid,
@@ -53,9 +53,19 @@ export function WaButton({
     });
   }
 
+  // PRD §3.2/§4.1: SEMUA klik melalui /api/contact-wa (bukan wa.me langsung)
+  // agar tercatat di CAPI + wa_clicks. href fallback pun mengarah ke route
+  // internal — server membuatkan event_id bila JS nonaktif. waLink (wa.me)
+  // tidak lagi dipakai sebagai href.
+  void waLink;
+  const fallbackHref =
+    leadRef != null && leadRef !== ""
+      ? `${CONTACT_WA_PATH}?lead=${encodeURIComponent(leadRef)}`
+      : CONTACT_WA_PATH;
+
   return (
     <a
-      href={waLink}
+      href={fallbackHref}
       onClick={handleClick}
       className={`inline-flex items-center justify-center gap-2.5 rounded-xl bg-wa font-semibold text-navy-900 shadow-card transition-colors hover:bg-wa-hover active:scale-[0.98] ${sizeClass} ${className}`}
     >

@@ -10,6 +10,42 @@ export const WA_PREFILLED_MESSAGE =
 export const PENSION_TYPES = ["TNI/Polri", "PNS", "BUMN", "Swasta"] as const;
 export type PensionType = (typeof PENSION_TYPES)[number];
 
+// PRD §5: nilai yang tersimpan di DB (snake_case) — label di atas hanya
+// untuk tampilan. Jangan simpan label langsung ke kolom leads.pension_type.
+export const PENSION_TYPE_DB = ["tni_polri", "pns", "bumn", "swasta"] as const;
+export type PensionTypeDb = (typeof PENSION_TYPE_DB)[number];
+
+const PENSION_LABEL_TO_DB: Record<string, PensionTypeDb> = {
+  "TNI/Polri": "tni_polri",
+  PNS: "pns",
+  BUMN: "bumn",
+  Swasta: "swasta",
+};
+
+const PENSION_DB_TO_LABEL: Record<string, PensionType> = {
+  tni_polri: "TNI/Polri",
+  pns: "PNS",
+  bumn: "BUMN",
+  swasta: "Swasta",
+};
+
+/** Label form ("TNI/Polri") → nilai DB ("tni_polri"). Terima juga nilai DB apa adanya. */
+export function pensionLabelToDb(value: string): PensionTypeDb | null {
+  if ((PENSION_TYPE_DB as readonly string[]).includes(value)) {
+    return value as PensionTypeDb;
+  }
+  return PENSION_LABEL_TO_DB[value] ?? null;
+}
+
+/** Nilai DB ("tni_polri") → label tampil ("TNI/Polri"). Fallback: tampilkan apa adanya. */
+export function pensionDbToLabel(value: string | null | undefined): string {
+  if (!value) return "-";
+  return PENSION_DB_TO_LABEL[value] ?? value;
+}
+
+// Nama konten standar untuk event Meta (PRD §4.2 ViewContent)
+export const PIXEL_CONTENT_NAME = "Landing Page Kredit Pensiun";
+
 // PRD §3.3 — chips preset nominal (tanpa slider, ramah motorik lansia)
 export const LOAN_MIN = 10_000_000;
 export const LOAN_MAX = 500_000_000;

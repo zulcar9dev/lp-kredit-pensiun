@@ -57,7 +57,7 @@ export default function TermsPage() {
           <p className="mt-2">
             Penggunaan data pribadi Bapak/Ibu diatur dalam{" "}
             <Link
-              href="/privacy"
+              href="/privacy-policy"
               className="font-semibold text-brand-700 underline decoration-brand-300 decoration-2 underline-offset-4"
             >
               Kebijakan Privasi

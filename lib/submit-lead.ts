@@ -19,6 +19,7 @@ export async function submitLead(payload: LeadPayload): Promise<SubmitResult> {
         applicant_relation: payload.applicantRelation,
         loan_amount: payload.loanAmount,
         consent: payload.consent,
+        website: payload.website ?? "",
         event_id: payload.event_id,
         fbp: payload.fbp,
         fbc: payload.fbc,

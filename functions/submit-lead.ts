@@ -5,7 +5,16 @@ const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
 const DUPLICATE_WINDOW_MS = 24 * 60 * 60 * 1000;
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 
-const PENSION_TYPES = ["TNI/Polri", "PNS", "BUMN", "Swasta"];
+// PRD §5: DB menyimpan snake_case. Terima label lama ("TNI/Polri") dari
+// klien lawas dan petakan ke snake_case sebelum validasi + insert.
+const PENSION_TYPES_DB = ["tni_polri", "pns", "bumn", "swasta"];
+const PENSION_LABEL_TO_DB: Record<string, string> = {
+  "TNI/Polri": "tni_polri",
+  PNS: "pns",
+  BUMN: "bumn",
+  Swasta: "swasta",
+};
+const PENSION_TYPES = PENSION_TYPES_DB;
 const APPLICANT_RELATIONS = ["sendiri", "orang_tua"];
 
 const LOAN_MIN = 10_000_000;
@@ -69,6 +78,15 @@ async function sendLeadToMetaCAPI(opts: {
   fbc: string | null;
   ip: string;
   userAgent: string | null;
+  pensionType?: string | null;
+  applicantRelation?: string | null;
+  utm?: {
+    utm_source: string | null;
+    utm_medium: string | null;
+    utm_campaign: string | null;
+    utm_content: string | null;
+    utm_term: string | null;
+  };
 }): Promise<void> {
   const pixelId = Deno.env.get("META_PIXEL_ID");
   const accessToken = Deno.env.get("META_ACCESS_TOKEN");
@@ -80,7 +98,8 @@ async function sendLeadToMetaCAPI(opts: {
   try {
     const [ph, fn] = await Promise.all([
       sha256Hex(opts.phoneE164.trim().toLowerCase()),
-      sha256Hex(opts.firstName.trim().toLowerCase().split(/\s+/)[0] ?? ""),
+      // PRD §4.1: nama lengkap (lowercase + trim) lalu SHA-256
+      sha256Hex(opts.firstName.trim().toLowerCase().replace(/\s+/g, " ")),
     ]);
     const payload = {
       data: [
@@ -96,7 +115,16 @@ async function sendLeadToMetaCAPI(opts: {
             client_ip_address: opts.ip || undefined,
             client_user_agent: opts.userAgent || undefined,
           },
-          custom_data: { content_name: "Kredit Pensiun" },
+          custom_data: {
+            content_name: "Landing Page Kredit Pensiun",
+            pension_type: opts.pensionType || undefined,
+            applicant_relation: opts.applicantRelation || undefined,
+            utm_source: opts.utm?.utm_source || undefined,
+            utm_medium: opts.utm?.utm_medium || undefined,
+            utm_campaign: opts.utm?.utm_campaign || undefined,
+            utm_content: opts.utm?.utm_content || undefined,
+            utm_term: opts.utm?.utm_term || undefined,
+          },
           action_source: "website",
         },
       ],
@@ -150,7 +178,14 @@ export default async function (req: Request): Promise<Response> {
     name, whatsapp, pension_type, applicant_relation, loan_amount, consent,
     event_id, fbp, fbc,
     utm_source, utm_medium, utm_campaign, utm_content, utm_term,
+    website,
   } = body;
+
+  // Honeypot: field "website" tak terlihat manusia. Terisi → bot.
+  // Respons sukses palsu agar bot tidak mencoba lagi, tanpa insert & tanpa CAPI.
+  if (typeof website === "string" && website.trim() !== "") {
+    return json({ ok: true, event_id: null, duplicate: false }, 200);
+  }
 
   // UU PDP: persetujuan wajib sebelum data diproses
   if (consent !== true) {
@@ -180,7 +215,10 @@ export default async function (req: Request): Promise<Response> {
     return json({ error: "Format nomor WhatsApp tidak valid." }, 400);
   }
 
-  if (!PENSION_TYPES.includes(pension_type)) {
+  const pensionDb =
+    PENSION_LABEL_TO_DB[pension_type] ??
+    (PENSION_TYPES.includes(pension_type) ? pension_type : null);
+  if (!pensionDb) {
     return json({ error: "Jenis pensiun tidak valid." }, 400);
   }
 
@@ -259,7 +297,7 @@ export default async function (req: Request): Promise<Response> {
       {
         name: trimmedName,
         whatsapp: whatsappE164,
-        pension_type,
+        pension_type: pensionDb,
         applicant_relation: relation,
         loan_amount: loanAmount,
         consent: true,
@@ -296,6 +334,15 @@ export default async function (req: Request): Promise<Response> {
     fbc: shortText(fbc, 200),
     ip,
     userAgent,
+    pensionType: pensionDb,
+    applicantRelation: relation,
+    utm: {
+      utm_source: shortText(utm_source, 100),
+      utm_medium: shortText(utm_medium, 100),
+      utm_campaign: shortText(utm_campaign, 200),
+      utm_content: shortText(utm_content, 200),
+      utm_term: shortText(utm_term, 200),
+    },
   });
 
   return json({ ok: true, id: data.id, event_id: eventId }, 200);
