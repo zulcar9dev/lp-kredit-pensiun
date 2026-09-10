@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { WaButton } from "@/components/wa-button";
+import { WA_OFFICE_HOURS } from "@/lib/constants";
 
 interface FloatingWhatsAppProps {
   waLink: string;
@@ -39,7 +40,12 @@ export function FloatingWhatsApp({ waLink }: FloatingWhatsAppProps) {
             : "pointer-events-none translate-y-3 opacity-0"
         }`}
       >
-        <WaButton waLink={waLink} size="lg" className="shadow-card-lg" />
+        <WaButton
+          waLink={waLink}
+          size="lg"
+          className="shadow-card-lg"
+          title={`Chat WhatsApp — dibalas cepat setiap hari ${WA_OFFICE_HOURS}`}
+        />
       </div>
     </>
   );

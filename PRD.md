@@ -537,6 +537,12 @@ Halaman mengumpulkan data pribadi (nama, nomor WhatsApp, IP, user-agent, cookie 
 | 2026-09-08 | Tabel `campaign_settings` dihapus; halaman Campaigns jadi UTM builder client-side | Utilitas UTM builder tetap tersedia tanpa beban tabel & CRUD |
 | 2026-09-08 | Kolom legacy dipertahankan nullable (`province`, `interested_bank`, `is_featured`, `faq.status`) | Data historis aman; form & query baru memakai kolom v2 |
 | 2026-09-08 | Implementasi align-prd-v2 selesai (migration, edge function, route, admin, UU PDP) | Codebase selaras dengan PRD v2 |
+| 2026-09-10 | Plan 100%: disclaimer footer + OJK verbatim PRD, form ringkas di Hero, redirect anti-500 + CAPI non-blocking, UTM merge, dashboard bulan ini + chart pensiun + tabel campaign | Eksekusi Batch Blocking + Major A |
+| 2026-09-10 | Floating CTA tetap sembunyi saat Hero terlihat (deviasi harfiah "selalu terlihat") | Hindari dobel CTA; tooltip jam 08.00–21.00 di tombol |
+| 2026-09-10 | Headline clamp maks 36px semua viewport; form admin default placeholder | Kepatuhan harfiah §3.4; cegah salah label manual |
+| 2026-09-10 | Validasi server-side Zod penuh (edge npm:zod mirror + safeParse semua server actions) | Best practice Next.js; single source di lib/schema.ts |
+| 2026-09-10 | Allowlist 1 email admin DITUNDA (tetap cek userId) | Menunggu alamat email pasti dari koordinator |
+| 2026-09-10 | Seed 6 FAQ generik non-produk (tanpa angka bunga/plafon) | Section FAQ tampil; angka produk tetap tunggu koordinator |
 
 ---
 

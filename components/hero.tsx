@@ -13,7 +13,7 @@ export async function Hero() {
     <section id="top" className="relative overflow-hidden">
       <div className="container-page grid items-center gap-10 pb-14 pt-10 md:pt-16 lg:grid-cols-[1fr_420px] lg:gap-14">
         <div className="reveal">
-          <h1 className="max-w-[20ch] text-4xl leading-[1.1] tracking-tight sm:text-5xl">
+          <h1 className="max-w-[20ch] text-3xl leading-[1.1] tracking-tight sm:text-4xl">
             Sudah pensiun dan masih ada rencana?{" "}
             <span className="text-brand-700">
               Tinggal chat, saya urus sampai cair.

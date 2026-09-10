@@ -4,6 +4,7 @@ import { getInsforgeAdmin } from "@/lib/insforge";
 import { requireAdmin } from "@/lib/admin-auth";
 import { normalizeToE164 } from "@/lib/phone";
 import { pensionLabelToDb } from "@/lib/constants";
+import { adminLeadSchema, zodErrorMessage } from "@/lib/schema";
 import type { Lead } from "@/lib/types/database";
 
 export type LeadRow = Omit<Lead, "created_at" | "updated_at"> & {
@@ -98,8 +99,7 @@ export async function fetchLeads(
 
 export async function fetchLeadOptions(): Promise<{
   campaigns: string[];
-}> {
-  await requireAdmin();
+}> {  await requireAdmin();
 
   const { data } = await getInsforgeAdmin().database
     .from("leads")
@@ -114,6 +114,31 @@ export async function fetchLeadOptions(): Promise<{
   return {
     campaigns: [...campaigns].sort(),
   };
+}
+
+// PRD §6.3 + §5: deteksi & penandaan lead duplikat (nomor sama > 1×
+// di baris aktif). Dipakai admin sebagai banner peringatan.
+export async function fetchDuplicateGroups(): Promise<
+  { whatsapp: string; count: number }[]
+> {
+  await requireAdmin();
+
+  const { data } = await getInsforgeAdmin().database
+    .from("leads")
+    .select("whatsapp")
+    .is("deleted_at", null)
+    .limit(10000);
+
+  const counts = new Map<string, number>();
+  for (const row of (data ?? []) as { whatsapp: string }[]) {
+    if (!row.whatsapp) continue;
+    counts.set(row.whatsapp, (counts.get(row.whatsapp) ?? 0) + 1);
+  }
+
+  return [...counts.entries()]
+    .filter(([, c]) => c > 1)
+    .map(([whatsapp, count]) => ({ whatsapp, count }))
+    .sort((a, b) => b.count - a.count);
 }
 
 export async function exportLeads(
@@ -158,14 +183,33 @@ export async function updateLead(
 ): Promise<{ ok: boolean; error?: string }> {
   await requireAdmin();
   // PRD §5: normalisasi label ("TNI/Polri") ke snake_case ("tni_polri")
-  const dbPension = payload.pension_type
+  const rawPension = payload.pension_type
     ? (pensionLabelToDb(payload.pension_type) ?? payload.pension_type)
     : undefined;
+  // PRD §8.2 (best practice: safeParse + early return)
+  const parsed = adminLeadSchema.partial().safeParse({
+    ...payload,
+    ...(rawPension ? { pension_type: rawPension } : {}),
+  });
+  if (!parsed.success) {
+    return { ok: false, error: zodErrorMessage(parsed.error) };
+  }
+  // Bangun objek update hanya dari key yang dikirim (agar default Zod
+  // tak menimpa kolom yang tidak diubah).
+  const update: Record<string, unknown> = {};
+  if (payload.name !== undefined) update.name = parsed.data.name;
+  if (payload.pension_type !== undefined)
+    update.pension_type = parsed.data.pension_type;
+  if (payload.applicant_relation !== undefined)
+    update.applicant_relation = parsed.data.applicant_relation;
+  if (payload.loan_amount !== undefined)
+    update.loan_amount = parsed.data.loan_amount;
+  if (payload.status !== undefined) update.status = parsed.data.status;
+  if (payload.notes !== undefined) update.notes = parsed.data.notes;
   const { error } = await getInsforgeAdmin().database
     .from("leads")
     .update({
-      ...payload,
-      ...(dbPension ? { pension_type: dbPension } : {}),
+      ...update,
       ...(payload.whatsapp
         ? { whatsapp: normalizeToE164(payload.whatsapp) }
         : {}),
@@ -189,21 +233,28 @@ export async function createLead(
     >
 ): Promise<{ ok: boolean; error?: string; id?: string }> {
   await requireAdmin();
-  const dbPension =
-    pensionLabelToDb(payload.pension_type) ?? payload.pension_type;
+  const parsed = adminLeadSchema.safeParse({
+    ...payload,
+    pension_type:
+      pensionLabelToDb(payload.pension_type) ?? payload.pension_type,
+  });
+  if (!parsed.success) {
+    return { ok: false, error: zodErrorMessage(parsed.error) };
+  }
+  const v = parsed.data;
   const { data, error } = await getInsforgeAdmin().database
     .from("leads")
     .insert([
       {
-        name: payload.name,
-        whatsapp: normalizeToE164(payload.whatsapp),
-        pension_type: dbPension,
-        applicant_relation: payload.applicant_relation ?? "sendiri",
+        name: v.name,
+        whatsapp: normalizeToE164(v.whatsapp),
+        pension_type: v.pension_type,
+        applicant_relation: v.applicant_relation,
         consent: true,
         consent_at: new Date().toISOString(),
-        loan_amount: payload.loan_amount ?? null,
-        notes: payload.notes ?? null,
-        status: payload.status ?? "new",
+        loan_amount: v.loan_amount ?? null,
+        notes: v.notes ?? null,
+        status: v.status ?? "new",
       },
     ])
     .select("id")

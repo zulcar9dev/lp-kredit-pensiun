@@ -2,6 +2,7 @@
 
 import { getInsforgeAdmin } from "@/lib/insforge";
 import { requireAdmin } from "@/lib/admin-auth";
+import { faqServerSchema, zodErrorMessage } from "@/lib/schema";
 import type { Faq } from "@/lib/types/database";
 
 export type FaqRow = Omit<Faq, "created_at">;
@@ -11,6 +12,7 @@ export async function fetchFaqs(): Promise<FaqRow[]> {
   const { data, error } = await getInsforgeAdmin().database
     .from("faq")
     .select("*")
+    .is("deleted_at", null)
     .order("display_order", { ascending: true });
 
   if (error) {
@@ -25,9 +27,13 @@ export async function createFaq(
   payload: Omit<Faq, "id" | "created_at">
 ): Promise<{ ok: boolean; id?: string; error?: string }> {
   await requireAdmin();
+  const parsed = faqServerSchema.safeParse(payload);
+  if (!parsed.success) {
+    return { ok: false, error: zodErrorMessage(parsed.error) };
+  }
   const { data, error } = await getInsforgeAdmin().database
     .from("faq")
-    .insert([payload])
+    .insert([parsed.data])
     .select("id")
     .single();
 
@@ -42,10 +48,19 @@ export async function updateFaq(
   payload: Partial<Omit<Faq, "id" | "created_at">>
 ): Promise<{ ok: boolean; error?: string }> {
   await requireAdmin();
+  const parsed = faqServerSchema.partial().safeParse(payload);
+  if (!parsed.success) {
+    return { ok: false, error: zodErrorMessage(parsed.error) };
+  }
+  const update: Record<string, unknown> = {};
+  for (const k of Object.keys(payload)) {
+    update[k] = (parsed.data as Record<string, unknown>)[k];
+  }
   const { error } = await getInsforgeAdmin().database
     .from("faq")
-    .update(payload)
-    .eq("id", id);
+    .update(update)
+    .eq("id", id)
+    .is("deleted_at", null);
 
   if (error) {
     return { ok: false, error: error.message };

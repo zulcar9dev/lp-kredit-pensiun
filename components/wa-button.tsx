@@ -14,6 +14,7 @@ interface WaButtonProps {
   label?: string;
   size?: "md" | "lg";
   className?: string;
+  title?: string;
 }
 
 export function WaButton({
@@ -22,11 +23,13 @@ export function WaButton({
   label = CTA_LABEL,
   size = "md",
   className = "",
+  title,
 }: WaButtonProps) {
+  // PRD §3.4 (design skill: target sentuh lansia): semua varian min 56px
   const sizeClass =
     size === "lg"
       ? "min-h-[56px] px-7 py-4 text-lg"
-      : "min-h-[48px] px-5 py-3 text-base";
+      : "min-h-[56px] px-5 py-3 text-base";
 
   // Klik CTA tidak langsung ke wa.me, melalui /api/contact-wa untuk
   // tracking CAPI "Contact" server-side (dedup dengan Pixel via eventID).
@@ -77,6 +80,8 @@ export function WaButton({
     <a
       href={fallbackHref}
       onClick={handleClick}
+      title={title}
+      aria-label={title ?? label}
       className={`inline-flex items-center justify-center gap-2.5 rounded-xl bg-wa font-semibold text-navy-900 shadow-card transition-colors hover:bg-wa-hover active:scale-[0.98] ${sizeClass} ${className}`}
     >
       <WhatsappLogo weight="fill" className="size-6 shrink-0" aria-hidden="true" />

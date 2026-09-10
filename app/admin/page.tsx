@@ -128,18 +128,34 @@ export default function AdminDashboardPage() {
     {} as Record<string, number>
   );
 
-  // PRD §6.5: tabel gabungan leads & klik WA per campaign (union kedua sumber)
+  // PRD §6.5: tabel gabungan leads & klik WA per campaign/content
+  // (union kedua sumber + konten teratas per kampanye)
+  const contentPerCampaign = new Map<string, Map<string, number>>();
+  for (const lead of leads) {
+    const campaign = lead.utm_campaign || "Direct / Organic";
+    const content = lead.utm_content || "—";
+    if (!contentPerCampaign.has(campaign)) {
+      contentPerCampaign.set(campaign, new Map());
+    }
+    const m = contentPerCampaign.get(campaign)!;
+    m.set(content, (m.get(content) ?? 0) + 1);
+  }
   const campaignRows = Array.from(
     new Set([
       ...Object.keys(clickCampaignCounts),
       ...Object.keys(campaignCounts),
     ])
   )
-    .map((campaign) => ({
-      campaign,
-      leads: campaignCounts[campaign] ?? 0,
-      clicks: clickCampaignCounts[campaign] ?? 0,
-    }))
+    .map((campaign) => {
+      const contents = [...(contentPerCampaign.get(campaign)?.entries() ?? [])]
+        .sort((a, b) => b[1] - a[1]);
+      return {
+        campaign,
+        leads: campaignCounts[campaign] ?? 0,
+        clicks: clickCampaignCounts[campaign] ?? 0,
+        topContent: contents.length > 0 ? contents[0][0] : "—",
+      };
+    })
     .sort((a, b) => b.leads - a.leads || b.clicks - a.clicks)
     .slice(0, 10);
 
@@ -343,6 +359,7 @@ export default function AdminDashboardPage() {
             <thead>
               <tr>
                 <th>Kampanye</th>
+                <th>Konten Teratas</th>
                 <th>Leads</th>
                 <th>Klik WA</th>
               </tr>
@@ -350,7 +367,7 @@ export default function AdminDashboardPage() {
             <tbody>
               {campaignRows.length === 0 && (
                 <tr>
-                  <td colSpan={3} className="text-muted" style={{ textAlign: "center", padding: "2rem" }}>
+                  <td colSpan={4} className="text-muted" style={{ textAlign: "center", padding: "2rem" }}>
                     Belum ada data
                   </td>
                 </tr>
@@ -358,6 +375,7 @@ export default function AdminDashboardPage() {
               {campaignRows.map((row) => (
                 <tr key={row.campaign}>
                   <td className="table-link">{row.campaign}</td>
+                  <td>{row.topContent}</td>
                   <td>{row.leads}</td>
                   <td>{row.clicks}</td>
                 </tr>

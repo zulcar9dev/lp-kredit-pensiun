@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { HandCoins, Info, WhatsappLogo } from "@phosphor-icons/react/dist/ssr";
-import { CTA_LABEL, LEGAL } from "@/lib/constants";
+import { CTA_LABEL, LEGAL, WA_OFFICE_HOURS } from "@/lib/constants";
 import { getAppSettings } from "@/lib/settings";
 import { buildWaLink } from "@/lib/wa";
 import { WaButton } from "@/components/wa-button";
+import { TelLink } from "@/components/tel-link";
 
 const NAV_LINKS = [
   { href: "/#keunggulan", label: "Keunggulan" },
@@ -66,8 +67,11 @@ export async function SiteFooter() {
               <WhatsappLogo weight="bold" className="size-4" aria-hidden="true" />
               WhatsApp / Telepon
             </p>
-            <p className="mt-1 text-xl font-extrabold tracking-tight text-navy-900">
-              {settings.waNumberDisplay}
+            <div className="mt-1 text-xl font-extrabold tracking-tight">
+              <TelLink number={settings.waNumberDisplay} />
+            </div>
+            <p className="mt-2 text-sm text-stone-600">
+              Dibalas cepat setiap hari {WA_OFFICE_HOURS}.
             </p>
             <WaButton waLink={waLink} label={CTA_LABEL} className="mt-4 w-full sm:w-auto" />
           </div>

@@ -3,6 +3,7 @@
 import { getInsforgeAdmin } from "@/lib/insforge";
 import { requireAdmin } from "@/lib/admin-auth";
 import { removeStoredImage } from "@/lib/remove-image";
+import { testimonialServerSchema, zodErrorMessage } from "@/lib/schema";
 import type { Testimonial } from "@/lib/types/database";
 
 export type TestimonialRow = Omit<Testimonial, "created_at">;
@@ -12,6 +13,7 @@ export async function fetchTestimonials(): Promise<TestimonialRow[]> {
   const { data, error } = await getInsforgeAdmin().database
     .from("testimonials")
     .select("*")
+    .is("deleted_at", null)
     .order("display_order", { ascending: true });
 
   if (error) {
@@ -26,9 +28,13 @@ export async function createTestimonial(
   payload: Omit<Testimonial, "id" | "created_at">
 ): Promise<{ ok: boolean; id?: string; error?: string }> {
   await requireAdmin();
+  const parsed = testimonialServerSchema.safeParse(payload);
+  if (!parsed.success) {
+    return { ok: false, error: zodErrorMessage(parsed.error) };
+  }
   const { data, error } = await getInsforgeAdmin().database
     .from("testimonials")
-    .insert([payload])
+    .insert([parsed.data])
     .select("id")
     .single();
 
@@ -43,6 +49,15 @@ export async function updateTestimonial(
   payload: Partial<Omit<Testimonial, "id" | "created_at">>
 ): Promise<{ ok: boolean; error?: string }> {
   await requireAdmin();
+  const parsed = testimonialServerSchema.partial().safeParse(payload);
+  if (!parsed.success) {
+    return { ok: false, error: zodErrorMessage(parsed.error) };
+  }
+  // Hanya kolom yang dikirim (agar default Zod tak menimpa sisanya)
+  const update: Record<string, unknown> = {};
+  for (const k of Object.keys(payload)) {
+    update[k] = (parsed.data as Record<string, unknown>)[k];
+  }
   const { data: current } = await getInsforgeAdmin().database
     .from("testimonials")
     .select("photo_key")
@@ -51,8 +66,9 @@ export async function updateTestimonial(
 
   const { error } = await getInsforgeAdmin().database
     .from("testimonials")
-    .update(payload)
-    .eq("id", id);
+    .update(update)
+    .eq("id", id)
+    .is("deleted_at", null);
 
   if (error) {
     return { ok: false, error: error.message };

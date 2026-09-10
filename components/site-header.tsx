@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { HandCoins } from "@phosphor-icons/react/dist/ssr";
 import { WaButton } from "@/components/wa-button";
+import { TelLink } from "@/components/tel-link";
 import { getAppSettings } from "@/lib/settings";
 import { buildWaLink } from "@/lib/wa";
 
@@ -26,7 +27,13 @@ export async function SiteHeader() {
             {settings.siteTitle}
           </span>
         </Link>
-        <WaButton waLink={waLink} />
+        <div className="flex shrink-0 items-center gap-4">
+          <TelLink
+            number={settings.waNumberDisplay}
+            className="hidden lg:inline-flex"
+          />
+          <WaButton waLink={waLink} />
+        </div>
       </div>
     </header>
   );

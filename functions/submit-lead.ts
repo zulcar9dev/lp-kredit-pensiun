@@ -1,4 +1,5 @@
 import { createAdminClient } from "npm:@insforge/sdk";
+import { z } from "npm:zod";
 
 const RATE_LIMIT_MAX = 5;
 const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
@@ -14,11 +15,61 @@ const PENSION_LABEL_TO_DB: Record<string, string> = {
   BUMN: "bumn",
   Swasta: "swasta",
 };
-const PENSION_TYPES = PENSION_TYPES_DB;
-const APPLICANT_RELATIONS = ["sendiri", "orang_tua"];
+
+const APPLICANT_RELATIONS = ["sendiri", "orang_tua"] as const;
 
 const LOAN_MIN = 10_000_000;
 const LOAN_MAX = 500_000_000;
+
+// PRD §8.2 — MIRROR dari lib/schema.ts (leadDbSchema). Edge Deno tidak bisa
+// impor relatif Next.js, jadi skema diduplikat di sini via npm:zod.
+// ATURAN SINKRON (ubah keduanya bila mengganti): nama 3–100, phone regex
+// /^(?:\+62|62|0)8\d{7,12}$/ + strip spasi-strip-titik-kurung, pension label
+// lama diterima lalu dipetakan ke snake, relasi default "sendiri",
+// loan int 10jt–500jt opsional, consent wajib true.
+const phoneField = z
+  .string()
+  .trim()
+  .transform((v) => v.replace(/[\s\-().]/g, ""))
+  .refine((v) => /^(?:\+62|62|0)8\d{7,12}$/.test(v), {
+    message: "Nomornya pakai format Indonesia ya, contoh: 081234567890",
+  });
+
+const edgeLeadSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(3, "Mohon isi nama lengkapnya, minimal 3 huruf.")
+    .max(100, "Namanya terlalu panjang."),
+  whatsapp: phoneField,
+  pension_type: z
+    .string()
+    .transform((v) => PENSION_LABEL_TO_DB[v] ?? v)
+    .pipe(
+      z.enum(PENSION_TYPES_DB as [string, ...string[]], {
+        message: "Jenis pensiun tidak valid.",
+      }),
+    ),
+  applicant_relation: z.enum(APPLICANT_RELATIONS).catch("sendiri"),
+  loan_amount: z
+    .union([z.number(), z.string(), z.null(), z.undefined()])
+    .transform((v) => {
+      if (v === undefined || v === null || v === "") return null;
+      const n = Number(v);
+      return Number.isInteger(n) ? n : NaN;
+    })
+    .pipe(
+      z
+        .number()
+        .int()
+        .min(LOAN_MIN, "Nominal minimal Rp 10 juta.")
+        .max(LOAN_MAX, "Nominal maksimal Rp 500 juta.")
+        .nullable(),
+    ),
+  consent: z.literal(true, {
+    message: "Mohon centang persetujuan pemrosesan data terlebih dulu.",
+  }),
+});
 
 function checkRateLimit(ip: string): boolean {
   const now = Date.now();
@@ -187,55 +238,26 @@ export default async function (req: Request): Promise<Response> {
     return json({ ok: true, event_id: null, duplicate: false }, 200);
   }
 
-  // UU PDP: persetujuan wajib sebelum data diproses
-  if (consent !== true) {
+  // PRD §8.2 (best practice: safeParse + early return)
+  const validated = edgeLeadSchema.safeParse({
+    name,
+    whatsapp,
+    pension_type,
+    applicant_relation,
+    loan_amount,
+    consent,
+  });
+  if (!validated.success) {
     return json(
-      { error: "Mohon centang persetujuan pemrosesan data terlebih dulu." },
+      { error: validated.error.issues[0]?.message ?? "Data tidak valid." },
       400,
     );
   }
-
-  // Validasi wajib + tipe
-  if (
-    typeof name !== "string" ||
-    typeof whatsapp !== "string" ||
-    typeof pension_type !== "string"
-  ) {
-    return json({ error: "Nama, WhatsApp, dan jenis pensiun wajib diisi." }, 400);
-  }
-
-  const trimmedName = name.trim();
-  if (trimmedName.length < 3 || trimmedName.length > 100) {
-    return json({ error: "Nama minimal 3 karakter." }, 400);
-  }
-
-  const phoneRegex = /^(?:\+62|62|0)8\d{7,12}$/;
-  const cleanWhatsapp = whatsapp.replace(/[\s\-().]/g, "");
-  if (!phoneRegex.test(cleanWhatsapp)) {
-    return json({ error: "Format nomor WhatsApp tidak valid." }, 400);
-  }
-
-  const pensionDb =
-    PENSION_LABEL_TO_DB[pension_type] ??
-    (PENSION_TYPES.includes(pension_type) ? pension_type : null);
-  if (!pensionDb) {
-    return json({ error: "Jenis pensiun tidak valid." }, 400);
-  }
-
-  const relation =
-    typeof applicant_relation === "string" &&
-    APPLICANT_RELATIONS.includes(applicant_relation)
-      ? applicant_relation
-      : "sendiri";
-
-  let loanAmount: number | null = null;
-  if (loan_amount !== undefined && loan_amount !== null && loan_amount !== "") {
-    const parsed = Number(loan_amount);
-    if (!Number.isInteger(parsed) || parsed < LOAN_MIN || parsed > LOAN_MAX) {
-      return json({ error: "Nominal pinjaman di luar batas yang diizinkan." }, 400);
-    }
-    loanAmount = parsed;
-  }
+  const trimmedName = validated.data.name;
+  const cleanWhatsapp = validated.data.whatsapp;
+  const pensionDb = validated.data.pension_type;
+  const relation = validated.data.applicant_relation;
+  const loanAmount = validated.data.loan_amount;
 
   const shortText = (v: unknown, max: number): string | null => {
     if (typeof v !== "string" || v.trim() === "") return null;

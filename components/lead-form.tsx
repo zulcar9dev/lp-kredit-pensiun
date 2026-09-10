@@ -163,7 +163,7 @@ export function LeadForm({
   }
 
   const chipBase =
-    "min-h-[48px] rounded-xl border-2 px-5 text-base font-semibold transition-colors active:scale-[0.98]";
+    "min-h-[56px] rounded-xl border-2 px-5 text-base font-semibold transition-colors active:scale-[0.98]";
   const chipActive = "border-brand-600 bg-brand-600 text-white";
   const chipIdle = "border-navy-200 bg-white text-navy-800 hover:border-navy-400";
 

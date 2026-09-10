@@ -15,6 +15,7 @@ import {
   fetchLeads,
   exportLeads,
   fetchLeadOptions,
+  fetchDuplicateGroups,
   createLead,
   updateLead,
   deleteLead,
@@ -36,7 +37,7 @@ const APPLICANT_RELATION_LABELS: Record<string, string> = {
 const EMPTY_FORM = {
   name: "",
   whatsapp: "",
-  pension_type: "pns" as string,
+  pension_type: "" as string,
   applicant_relation: "sendiri" as LeadRow["applicant_relation"],
   loan_amount: null as number | null,
   status: "new" as LeadRow["status"],
@@ -50,6 +51,9 @@ export default function AdminLeadsPage() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [campaignOptions, setCampaignOptions] = useState<string[]>([]);
+  const [dupGroups, setDupGroups] = useState<
+    { whatsapp: string; count: number }[]
+  >([]);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -125,6 +129,11 @@ export default function AdminLeadsPage() {
       .catch((err) => {
         console.error("Gagal memuat opsi filter:", err);
       });
+    fetchDuplicateGroups()
+      .then(setDupGroups)
+      .catch((err) => {
+        console.error("Gagal memuat duplikat:", err);
+      });
   }, []);
 
   const totalPages = Math.ceil(total / PER_PAGE);
@@ -140,7 +149,7 @@ export default function AdminLeadsPage() {
     setFormData({
       name: lead.name,
       whatsapp: lead.whatsapp,
-      pension_type: pensionLabelToDb(lead.pension_type) ?? "pns",
+      pension_type: pensionLabelToDb(lead.pension_type) ?? "",
       applicant_relation: lead.applicant_relation ?? "sendiri",
       loan_amount: lead.loan_amount ?? null,
       status: lead.status,
@@ -160,6 +169,14 @@ export default function AdminLeadsPage() {
   }
 
   async function handleSave() {
+    if (!formData.name.trim() || !formData.whatsapp.trim()) {
+      alert("Nama dan nomor WhatsApp wajib diisi.");
+      return;
+    }
+    if (!formData.pension_type) {
+      alert("Mohon pilih jenis pensiunnya dulu.");
+      return;
+    }
     setSaving(true);
 
     if (editingLead) {
@@ -176,6 +193,7 @@ export default function AdminLeadsPage() {
       if (result.ok) {
         setShowModal(false);
         loadLeads();
+        fetchDuplicateGroups().then(setDupGroups).catch(() => {});
       } else {
         alert("Gagal menyimpan: " + result.error);
       }
@@ -193,6 +211,7 @@ export default function AdminLeadsPage() {
       if (result.ok) {
         setShowModal(false);
         loadLeads();
+        fetchDuplicateGroups().then(setDupGroups).catch(() => {});
       } else {
         alert("Gagal menambah lead: " + result.error);
       }
@@ -207,6 +226,7 @@ export default function AdminLeadsPage() {
     if (result.ok) {
       setShowDelete(false);
       loadLeads();
+      fetchDuplicateGroups().then(setDupGroups).catch(() => {});
     } else {
       alert("Gagal menghapus: " + result.error);
     }
@@ -301,6 +321,32 @@ export default function AdminLeadsPage() {
           </button>
         </div>
       </div>
+
+      {dupGroups.length > 0 && (
+        <div className="card" style={{ borderColor: "var(--amber-500)" }}>
+          <p className="font-bold">
+            Ada {dupGroups.length} nomor terduplikat — klik untuk memeriksa:
+          </p>
+          <div
+            style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 8 }}
+          >
+            {dupGroups.map((d) => (
+              <button
+                key={d.whatsapp}
+                type="button"
+                className="btn btn-sm btn-secondary"
+                onClick={() => {
+                  setSearch(d.whatsapp);
+                  setCurrentPage(1);
+                }}
+                title={`${d.count} baris memakai nomor ini`}
+              >
+                {d.whatsapp} ({d.count}×)
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="card">
         <div className="filter-bar">
@@ -571,6 +617,9 @@ export default function AdminLeadsPage() {
                       updateField("pension_type", e.target.value)
                     }
                   >
+                    <option value="" disabled>
+                      Pilih jenis pensiun…
+                    </option>
                     {PENSION_TYPE_DB.map((p) => (
                       <option key={p} value={p}>
                         {pensionDbToLabel(p)}

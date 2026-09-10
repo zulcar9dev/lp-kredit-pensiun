@@ -3,6 +3,7 @@
 import { getInsforgeAdmin } from "@/lib/insforge";
 import { requireAdmin } from "@/lib/admin-auth";
 import { removeStoredImage } from "@/lib/remove-image";
+import { bankProductServerSchema, zodErrorMessage } from "@/lib/schema";
 import type { BankProduct } from "@/lib/types/database";
 
 export type BankProductRow = Omit<BankProduct, "created_at" | "updated_at">;
@@ -27,9 +28,13 @@ export async function createBankProduct(
   payload: Omit<BankProduct, "id" | "created_at" | "updated_at">
 ): Promise<{ ok: boolean; id?: string; error?: string }> {
   await requireAdmin();
+  const parsed = bankProductServerSchema.safeParse(payload);
+  if (!parsed.success) {
+    return { ok: false, error: zodErrorMessage(parsed.error) };
+  }
   const { data, error } = await getInsforgeAdmin().database
     .from("bank_products")
-    .insert([payload])
+    .insert([parsed.data])
     .select("id")
     .single();
 
@@ -44,6 +49,14 @@ export async function updateBankProduct(
   payload: Partial<Omit<BankProduct, "id" | "created_at" | "updated_at">>
 ): Promise<{ ok: boolean; error?: string }> {
   await requireAdmin();
+  const parsed = bankProductServerSchema.partial().safeParse(payload);
+  if (!parsed.success) {
+    return { ok: false, error: zodErrorMessage(parsed.error) };
+  }
+  const update: Record<string, unknown> = {};
+  for (const k of Object.keys(payload)) {
+    update[k] = (parsed.data as Record<string, unknown>)[k];
+  }
   const { data: current } = await getInsforgeAdmin().database
     .from("bank_products")
     .select("logo_key")
@@ -52,8 +65,9 @@ export async function updateBankProduct(
 
   const { error } = await getInsforgeAdmin().database
     .from("bank_products")
-    .update(payload)
-    .eq("id", id);
+    .update(update)
+    .eq("id", id)
+    .is("deleted_at", null);
 
   if (error) {
     return { ok: false, error: error.message };

@@ -10,7 +10,12 @@ export function TelLink({
 }) {
   const display = number || WA_NUMBER_DISPLAY;
   const clean = display.replace(/[^0-9]/g, "");
-  const tel = clean.startsWith("0") ? `+62${clean.slice(1)}` : `+62${clean}`;
+  // E.164 untuk tel:: 08… → +62…, 62… → +62… (tanpa dobel prefix)
+  const tel = clean.startsWith("0")
+    ? `+62${clean.slice(1)}`
+    : clean.startsWith("62")
+      ? `+${clean}`
+      : `+62${clean}`;
 
   return (
     <a
