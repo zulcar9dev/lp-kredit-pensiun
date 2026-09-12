@@ -33,7 +33,7 @@ export function ImageUploadField({
     setError(null);
     setBusy(true);
     try {
-      const uploaded = await uploadImage(file, folder);
+      const uploaded = await uploadImage(file, folder, maxSizeMB);
       onChange(uploaded);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Gagal mengunggah gambar.");

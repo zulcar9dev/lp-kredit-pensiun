@@ -10,6 +10,8 @@ import {
   upsertSetting,
   type SettingRow,
 } from "@/lib/actions/settings";
+import { deleteStoredImageAction } from "@/lib/actions/upload-image";
+import { ImageUploadField } from "@/components/image-upload-field";
 
 export default function AdminSettingsPage() {
   const [settings, setSettings] = useState<SettingRow[]>([]);
@@ -52,13 +54,28 @@ export default function AdminSettingsPage() {
 
   async function handleSave() {
     setSaving(true);
-    const keys = ["site_title", "wa_number", "wa_number_display", "wa_greeting"];
+    const oldKey = settings.find(
+      (s) => s.setting_key === "consultation_photo_key"
+    )?.setting_value;
+    const keys = [
+      "site_title",
+      "wa_number",
+      "wa_number_display",
+      "wa_greeting",
+      "consultation_photo_url",
+      "consultation_photo_key",
+    ];
     const results = await Promise.all(
       keys.map((key) => upsertSetting(key, getSetting(key)))
     );
     setSaving(false);
     const failed = results.find((r) => !r.ok);
     if (!failed) {
+      // Bersihkan file lama bila foto diganti/dihapus
+      const newKey = getSetting("consultation_photo_key");
+      if (oldKey && oldKey !== newKey) {
+        await deleteStoredImageAction(oldKey);
+      }
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } else {
@@ -169,6 +186,51 @@ export default function AdminSettingsPage() {
             value={getSetting("wa_greeting")}
             onChange={(e) => updateLocal("wa_greeting", e.target.value)}
           />
+        </div>
+
+        <div className="mt-4">
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={handleSave}
+            disabled={saving}
+          >
+            {saving ? (
+              <CircleNotch weight="bold" className="animate-spin" />
+            ) : (
+              "Simpan Pengaturan"
+            )}
+          </button>
+        </div>
+      </div>
+
+      <div className="card mt-6">
+        <div className="card-header">
+          <h3 className="card-title">Foto Landing</h3>
+        </div>
+
+        <div className="form-group">
+          <label className="form-label">
+            Foto suasana konsultasi
+            <span className="form-label-hint">
+              {" "}
+              — tampil di section formulir (landscape)
+            </span>
+          </label>
+          <ImageUploadField
+            url={getSetting("consultation_photo_url")}
+            folder="landing-photos"
+            maxSizeMB={2}
+            hint="JPG/PNG/WebP, maksimal 2MB, landscape 1280px. Klik Simpan Pengaturan setelah upload."
+            onChange={(v) => {
+              updateLocal("consultation_photo_url", v?.url ?? "");
+              updateLocal("consultation_photo_key", v?.key ?? "");
+            }}
+          />
+          <div className="form-hint">
+            Kosongkan (tombol Hapus + Simpan) untuk kembali ke placeholder.
+            Foto lama otomatis dihapus dari penyimpanan saat diganti.
+          </div>
         </div>
 
         <div className="mt-4">

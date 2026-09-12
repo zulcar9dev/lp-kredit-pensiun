@@ -20,7 +20,11 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "**",
+        hostname: "*.insforge.app",
+      },
+      {
+        protocol: "https",
+        hostname: "*.insforge.site",
       },
     ],
   },

@@ -1,6 +1,6 @@
 "use client";
 
-import { createBrowserClient } from "@insforge/sdk/ssr";
+import { uploadImageAction } from "@/lib/actions/upload-image";
 
 export const IMAGE_ACCEPT = ["image/jpeg", "image/png", "image/webp"];
 
@@ -21,21 +21,20 @@ export interface UploadedImage {
 
 export async function uploadImage(
   file: File,
-  folder: string
+  folder: string,
+  maxMB = 2
 ): Promise<UploadedImage> {
-  const client = createBrowserClient({
-    baseUrl: process.env.NEXT_PUBLIC_INSFORGE_URL!,
-    anonKey: process.env.NEXT_PUBLIC_INSFORGE_ANON_KEY!,
-  });
+  const invalid = validateImageFile(file, maxMB);
+  if (invalid) throw new Error(invalid);
 
-  const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
-  const path = `${folder}/${Date.now()}-${Math.random()
-    .toString(36)
-    .slice(2, 8)}.${ext}`;
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("folder", folder);
+  formData.append("maxMB", String(maxMB));
 
-  const { data, error } = await client.storage.from("images").upload(path, file);
-  if (error || !data?.url || !data?.key) {
-    throw new Error(error?.message || "Gagal mengunggah gambar.");
+  const result = await uploadImageAction(formData);
+  if (!result.ok || !result.url || !result.key) {
+    throw new Error(result.error || "Gagal mengunggah gambar.");
   }
-  return { url: data.url, key: data.key };
+  return { url: result.url, key: result.key };
 }

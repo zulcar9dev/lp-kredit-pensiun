@@ -1,4 +1,5 @@
 import { Check } from "@phosphor-icons/react/dist/ssr";
+import Image from "next/image";
 import { LeadForm } from "@/components/lead-form";
 import { PhotoSlot } from "@/components/photo-slot";
 import { WaButton } from "@/components/wa-button";
@@ -40,11 +41,23 @@ export async function LeadFormSection() {
             ))}
           </ul>
 
-          <PhotoSlot
-            label="Tempat foto suasana konsultasi bersama nasabah pensiunan. Menunggu foto asli dari koordinator."
-            ratio="aspect-video"
-            className="mt-8 max-w-md"
-          />
+          {settings.consultationPhotoUrl ? (
+            <div className="relative mt-8 aspect-video w-full max-w-md overflow-hidden rounded-xl border border-stone-200 shadow-card">
+              <Image
+                src={settings.consultationPhotoUrl}
+                alt="Suasana konsultasi bersama nasabah pensiunan"
+                fill
+                sizes="(max-width: 1024px) 100vw, 448px"
+                className="object-cover"
+              />
+            </div>
+          ) : (
+            <PhotoSlot
+              label="Tempat foto suasana konsultasi bersama nasabah pensiunan. Menunggu foto asli dari koordinator."
+              ratio="aspect-video"
+              className="mt-8 max-w-md"
+            />
+          )}
         </div>
 
         <div className="rounded-xl border border-stone-200 bg-white p-6 shadow-card-lg md:p-9">

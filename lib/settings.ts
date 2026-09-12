@@ -11,6 +11,8 @@ export interface AppSettings {
   waNumberIntl: string;
   waNumberDisplay: string;
   waGreeting: string;
+  consultationPhotoUrl: string;
+  consultationPhotoKey: string;
 }
 
 export async function getAppSettings(): Promise<AppSettings> {
@@ -33,5 +35,7 @@ export async function getAppSettings(): Promise<AppSettings> {
     waNumberIntl: getSetting("wa_number", WA_NUMBER_INTL),
     waNumberDisplay: getSetting("wa_number_display", WA_NUMBER_DISPLAY),
     waGreeting: getSetting("wa_greeting", WA_PREFILLED_MESSAGE),
+    consultationPhotoUrl: getSetting("consultation_photo_url", ""),
+    consultationPhotoKey: getSetting("consultation_photo_key", ""),
   };
 }
