@@ -61,9 +61,8 @@ export function HowItWorks() {
         </ol>
 
         <p className="mt-8 max-w-[56ch] text-sm text-stone-600">
-          Soal lama proses dan persyaratan lengkap, semuanya dijelaskan saat
-          konsultasi sesuai kondisi dana pensiun dan produk bank mitra
-          Bapak/Ibu.
+          Soal lama proses dan berkas yang perlu disiapkan, semuanya
+          dijelaskan saat konsultasi sesuai kondisi Bapak/Ibu.
         </p>
       </div>
     </section>

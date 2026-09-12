@@ -43,24 +43,10 @@ export interface WaClick {
   created_at: string;
 }
 
-export interface BankProduct {
-  id: string;
-  bank_name: string;
-  product_name: string | null;
-  plafon_min: number | null;
-  plafon_max: number | null;
-  bunga_indikatif: number | null;
-  tenor_min: number | null;
-  tenor_max: number | null;
-  notes: string | null;
-  logo_url: string | null;
-  logo_key: string | null;
-  display_order: number;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-  deleted_at?: string | null;
-}
+// DEPRECATED 2026-09-12: tabel bank_products dihapus permanen (keputusan
+// anti-penolakan Meta). Tipe disisakan sebagai alias agar import lama tidak
+// meledak saat transisi; hapus total setelah semua referensi bersih.
+export type BankProduct = Record<string, never>;
 
 export interface AppSetting {
   id: string;

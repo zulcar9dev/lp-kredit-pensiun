@@ -7,10 +7,6 @@ import { fetchLeads, type LeadRow } from "@/lib/actions/leads";
 import { fetchWaClicks } from "@/lib/actions/wa-clicks";
 import { formatRupiah } from "@/lib/format";
 import { pensionDbToLabel } from "@/lib/constants";
-import {
-  fetchBankProducts,
-  type BankProductRow,
-} from "@/lib/actions/bank-products";
 import type { WaClick } from "@/lib/types/database";
 
 const RELATION_LABELS: Record<string, string> = {
@@ -20,15 +16,13 @@ const RELATION_LABELS: Record<string, string> = {
 
 export default function AdminDashboardPage() {
   const [leads, setLeads] = useState<LeadRow[]>([]);
-  const [banks, setBanks] = useState<BankProductRow[]>([]);
   const [waClicks, setWaClicks] = useState<WaClick[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([fetchLeads({ limit: 0 }), fetchBankProducts(), fetchWaClicks()])
-      .then(([l, b, c]) => {
+    Promise.all([fetchLeads({ limit: 0 }), fetchWaClicks()])
+      .then(([l, c]) => {
         setLeads(l.rows);
-        setBanks(b);
         setWaClicks(c);
       })
       .catch((err) => {
@@ -70,7 +64,6 @@ export default function AdminDashboardPage() {
   const newLeads = leads.filter((l) => l.status === "new").length;
   const qualifiedLeads = leads.filter((l) => l.status === "qualified").length;
   const approvedLeads = leads.filter((l) => l.status === "approved").length;
-  const activeBanks = banks.filter((b) => b.is_active).length;
 
   const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
   const waClicksWeek = waClicks.filter(
@@ -443,27 +436,6 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      <div className="card mt-6">
-        <div className="card-header">
-          <h3 className="card-title">Bank Mitra Aktif</h3>
-          <Link
-            href="/admin/bank-products"
-            className="btn btn-sm btn-secondary"
-          >
-            Kelola
-          </Link>
-        </div>
-        <div className="stat-grid" style={{ marginBottom: 0 }}>
-          <div className="stat-card">
-            <div className="stat-label">Bank Aktif</div>
-            <div className="stat-value stat-emerald">{activeBanks}</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-label">Total Produk</div>
-            <div className="stat-value stat-navy">{banks.length}</div>
-          </div>
-        </div>
-      </div>
     </>
   );
 }

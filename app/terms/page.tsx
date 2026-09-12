@@ -34,10 +34,10 @@ export default function TermsPage() {
             Proses pengajuan
           </h2>
           <p className="mt-2">
-            Pengajuan dimulai dari konsultasi bersama kami. Produknya milik
-            bank mitra, jadi soal persetujuan kredit, besar bunga, dan jangka
-            waktu mengikuti syarat resmi bank terkait. Semuanya dijelaskan
-            lengkap sebelum ada dokumen yang ditandatangani.
+            Pengajuan dimulai dari konsultasi bersama kami. Soal persetujuan,
+            besar cicilan atau bunga, dan jangka waktu mengikuti syarat resmi
+            lembaga keuangan terkait. Semuanya dijelaskan lengkap sebelum ada
+            dokumen yang ditandatangani.
           </p>
         </section>
 

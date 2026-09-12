@@ -8,7 +8,6 @@ import { TelLink } from "@/components/tel-link";
 
 const NAV_LINKS = [
   { href: "/#keunggulan", label: "Keunggulan" },
-  { href: "/#bank-mitra", label: "Bank Mitra" },
   { href: "/#cara-pengajuan", label: "Cara Pengajuan" },
   { href: "/#ajukan", label: "Ajukan Sekarang" },
   { href: "/#faq", label: "Tanya Jawab" },

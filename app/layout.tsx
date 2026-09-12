@@ -15,7 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const settings = await getAppSettings();
   const pageTitle = `${settings.siteTitle} | Tinggal Chat, Saya Urus Sampai Cair`;
   const pageDescription =
-    "Pendampingan pengajuan kredit pensiun untuk pensiunan TNI/Polri, PNS, BUMN, dan swasta. Konsultasi gratis via WhatsApp, ada pilihan produk dari beberapa bank mitra.";
+    "Pendampingan pengajuan kredit pensiun untuk pensiunan TNI/Polri, PNS, BUMN, dan swasta. Konsultasi gratis via WhatsApp, ditemani sampai jelas.";
 
   return {
     metadataBase: new URL(SITE_URL),
@@ -39,7 +39,7 @@ export async function generateMetadata(): Promise<Metadata> {
       card: "summary_large_image",
       title: pageTitle,
       description:
-        "Konsultasi gratis via WhatsApp, ada pilihan produk dari beberapa bank mitra.",
+        "Konsultasi gratis via WhatsApp, ditemani sampai jelas.",
     },
     robots: {
       index: true,

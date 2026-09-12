@@ -43,11 +43,11 @@ export default function PrivacyPolicyPage() {
             Datanya dipakai untuk apa
           </h2>
           <p className="mt-2">
-            Data Bapak/Ibu hanya dipakai untuk dua hal: mencarikan produk
-            kredit pensiun yang cocok dari bank mitra, dan menghubungi
-            Bapak/Ibu untuk konsultasi. Sebatas keperluan pengajuan, data boleh
-            diteruskan ke bank mitra pilihan Bapak/Ibu. Kami tidak menjual
-            atau menyebarkan data ke pihak lain di luar itu.
+            Data Bapak/Ibu hanya dipakai untuk keperluan pendampingan dan
+            konsultasi pengajuan. Sebatas keperluan pengajuan dan atas
+            persetujuan Bapak/Ibu, data boleh diteruskan ke lembaga keuangan
+            terkait. Kami tidak menjual atau menyebarkan data ke pihak lain
+            di luar itu.
           </p>
         </section>
 
@@ -98,8 +98,8 @@ export default function PrivacyPolicyPage() {
           </h2>
           <p className="mt-2">
             Website ini dikelola oleh agen pemasaran independen dan bukan
-            bagian dari bank mana pun. Persetujuan kredit sepenuhnya merupakan
-            wewenang bank.
+            bagian dari bank mana pun. Keputusan persetujuan sepenuhnya ada
+            di lembaga keuangan terkait, bukan di kami.
           </p>
         </section>
       </div>

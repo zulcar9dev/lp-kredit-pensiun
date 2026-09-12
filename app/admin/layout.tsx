@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import {
   House,
   User,
-  Bank,
   Star,
   Question,
   Gear,
@@ -21,7 +20,6 @@ import "./globals.css";
 const NAV_ITEMS = [
   { href: "/admin", label: "Dashboard", icon: House },
   { href: "/admin/leads", label: "Leads", icon: User },
-  { href: "/admin/bank-products", label: "Bank & Produk", icon: Bank },
   { href: "/admin/campaigns", label: "Campaigns", icon: Megaphone },
   { href: "/admin/testimonials", label: "Testimoni", icon: Star },
   { href: "/admin/faq", label: "FAQ", icon: Question },

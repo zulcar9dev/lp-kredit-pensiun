@@ -71,9 +71,9 @@ export const LEGAL = {
   // PRD §7.1 — teks verbatim (dipakai footer + terms; jangan dipersingkat
   // tanpa revisi PRD karena menentukan lolos compliance sign-off QA §9.2)
   agentDisclaimer:
-    "Website ini dikelola oleh agen pemasaran independen dan bukan merupakan aplikasi resmi perbankan. Persetujuan pinjaman, penetapan bunga, dan pencairan dana sepenuhnya merupakan wewenang dari lembaga keuangan / bank mitra yang bersangkutan.",
+    "Website ini dikelola oleh agen pemasaran independen dan bukan merupakan aplikasi resmi perbankan. Persetujuan pinjaman, penetapan bunga, dan pencairan dana sepenuhnya merupakan wewenang dari lembaga keuangan terkait.",
   ojkNeutralLine:
-    "Seluruh produk kredit pensiun ditawarkan oleh bank mitra yang terdaftar dan diawasi oleh Otoritas Jasa Keuangan (OJK).",
+    "Layanan ini pendampingan umum, bukan bank. Jika nanti ada rujukan ke lembaga keuangan, pastikan lembaga tersebut terdaftar dan diawasi OJK.",
   indicativeNote: "Angka indikatif, syarat dan ketentuan berlaku.",
   generalDisclaimer:
     "Informasi di halaman ini bersifat umum dan bukan penawaran resmi.",
@@ -94,9 +94,9 @@ export const ADVANTAGES: Advantage[] = [
   },
   {
     icon: "banks",
-    title: "Ada pilihan banyak bank",
+    title: "Ditemani dari awal sampai akhir",
     description:
-      "Saya bandingkan produk dari beberapa bank mitra sekaligus, lalu tunjukkan mana yang paling cocok dengan dana pensiun Bapak/Ibu.",
+      "Ada yang bisa ditanya kapan saja. Dari chat pertama sampai berkas beres, Bapak/Ibu tidak jalan sendiri.",
   },
   {
     icon: "accompany",
@@ -126,10 +126,10 @@ export const STEPS: Step[] = [
       "Klik tombol hijau WhatsApp atau isi formulir singkat. Ceritakan saja kebutuhan Bapak/Ibu, tidak perlu resmi-resmi.",
   },
   {
-    label: "Dicarikan produk yang cocok",
-    title: "Dibandingkan satu per satu",
+    label: "Dicek bareng kebutuhannya",
+    title: "Dihitung yang aman",
     description:
-      "Plafon dan cicilan dari tiap bank mitra saya bandingkan, lalu saya tunjukkan mana yang paling pas untuk dana pensiun Bapak/Ibu.",
+      "Kebutuhan, cicilan yang aman, dan berkasnya saya bantu cek satu per satu. Semua dijelaskan terbuka sebelum memutuskan.",
   },
   {
     label: "Didampingi sampai cair",

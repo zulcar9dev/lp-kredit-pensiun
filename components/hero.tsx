@@ -20,8 +20,8 @@ export async function Hero() {
             </span>
           </h1>
           <p className="mt-5 max-w-[52ch] text-stone-700 md:text-xl">
-            Konsultasi gratis. Saya carikan produk dari beberapa bank mitra
-            yang pas dengan dana pensiun Bapak/Ibu.
+            Konsultasi gratis. Ceritakan saja kebutuhannya, saya bantu urus
+            pengajuannya sampai jelas.
           </p>
 
           <div className="mt-8 flex flex-wrap gap-3">

@@ -2,7 +2,6 @@ import { SiteHeader } from "@/components/site-header";
 import { Hero } from "@/components/hero";
 import { FloatingWhatsApp } from "@/components/floating-whatsapp";
 import { Advantages } from "@/components/advantages";
-import { BankPartners } from "@/components/bank-partners";
 import { HowItWorks } from "@/components/how-it-works";
 import { Testimonials } from "@/components/testimonials";
 import { LeadFormSection } from "@/components/lead-form-section";
@@ -29,7 +28,7 @@ async function StructuredData({ faqs }: { faqs: { question: string; answer: stri
         url: `${SITE_URL}/`,
         name: `${settings.siteTitle} | Tinggal Chat, Saya Urus Sampai Cair`,
         description:
-          "Pendampingan pengajuan kredit pensiun dari beberapa bank mitra untuk pensiunan TNI/Polri, PNS, BUMN, dan swasta.",
+          "Pendampingan pengajuan kredit pensiun untuk pensiunan TNI/Polri, PNS, BUMN, dan swasta.",
         inLanguage: "id-ID",
       },
       {
@@ -56,7 +55,7 @@ async function StructuredData({ faqs }: { faqs: { question: string; answer: stri
 }
 
 export default async function Home() {
-  const { bankProducts, testimonials, faqs } = await fetchLandingData();
+  const { testimonials, faqs } = await fetchLandingData();
   const settings = await getAppSettings();
   const waLink = buildWaLink(settings);
 
@@ -68,7 +67,6 @@ export default async function Home() {
         <Hero />
         <FloatingWhatsApp waLink={waLink} />
         <Advantages />
-        <BankPartners products={bankProducts} />
         <HowItWorks />
         <ScrollTracker />
         <Testimonials items={testimonials} />

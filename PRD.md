@@ -5,12 +5,12 @@
 | Field              | Detail                                              |
 | ------------------ | --------------------------------------------------- |
 | **Product Name**   | Landing Page Kredit Pensiun (Agen Pemasaran Independen) |
-| **Purpose**        | Halaman arahan Meta Ads milik pemasaran independen untuk menghasilkan lead calon peminjam kredit pensiun, mereferalkannya ke produk kredit pensiun dari bank mitra (BUMN/Swasta), dan mengarahkan konsultasi langsung via WhatsApp. |
+| **Purpose**        | Halaman arahan Meta Ads milik pemasaran independen untuk menghasilkan lead calon peminjam kredit pensiun melalui pendampingan konsultasi umum, dan mengarahkan konsultasi langsung via WhatsApp. Tanpa katalog bank (dihapus permanen 2026-09-12 untuk menghindari penolakan Meta). |
 | **Target Users**   | Segmen A: Pensiunan TNI/Polri, PNS, BUMN/Swasta (60–75 tahun). Segmen B: Anak/Mantu Pensiunan (35–50 tahun) sebagai perantara digital. |
 | **Budget Iklan**   | Rp 500.000 – Rp 1.000.000 / bulan (Facebook & Instagram) |
 | **Tech Stack**     | Next.js 14+ (App Router), Tailwind CSS v3.4, TypeScript, InsForge SDK |
 | **Deployment**     | InsForge Deployments — Fase trial: subdomain InsForge. Sebelum scale: custom domain + verifikasi domain Meta (lihat §9) |
-| **Status**         | Revised Draft v2 — KPI terukur, spesifikasi CAPI lengkap, kepatuhan UU PDP, konsistensi schema |
+| **Status**         | Revised Draft v3 — Hapus Bank Permanen (anti-tolak Meta), KPI terukur, spesifikasi CAPI lengkap, kepatuhan UU PDP, konsistensi schema |
 
 ---
 
@@ -19,7 +19,7 @@
 ### 1.1 Business Goals
 
 - Menghasilkan lead berkualitas calon peminjam kredit pensiun melalui Meta Ads (Facebook & Instagram).
-- Mereferalkan lead ke produk kredit pensiun bank mitra yang paling sesuai dengan profil nasabah.
+- Mendampingi lead lewat konsultasi umum (tanpa janji produk bank spesifik) hingga siap mengajukan ke lembaga keuangan terkait.
 - Mengoptimalkan konversi dengan pengalaman pengguna yang ramah lansia dan ramah perangkat mobile.
 - Mengarahkan calon nasabah langsung ke WhatsApp koordinator untuk pendampingan personal.
 
@@ -61,7 +61,7 @@ Catatan operasional:
 ### 2.3 Meta Ads Policy Notes (Wajib dipatuhi tim iklan)
 
 1. **Larangan atribut personal:** Kreatif/copy dilarang menyiratkan mengetahui status personal atau finansial pengguna (mis. "Anda pensiunan PNS?") — berisiko ditolak Meta. Gunakan bentuk umum: "Sudah pensiun, butuh dana tambahan?"
-2. **Kategori finansial sensitif:** Landing page wajib informatif (bunga indikatif, disclaimer, S&K) untuk menekan risiko penolakan iklan dan komplain.
+2. **Kategori finansial sensitif (tanpa katalog bank):** Landing page TIDAK menampilkan nama/logo bank, plafon, bunga, atau tenor spesifik. Fokus ke pendampingan umum + disclaimer agen + tanpa klaim angka — untuk menekan risiko penolakan iklan dan komplain.
 3. **Retargeting:** Bangun Custom Audience dari semua visitor (PageView), engaged (ViewContent ≥50% scroll), dan lead (Lead event). Jalankan campaign retargeting setelah volume audiens cukup.
 
 ---
@@ -73,15 +73,15 @@ Catatan operasional:
 | No | Section                  | Prioritas | Deskripsi                                                                    |
 | -- | ------------------------ | --------- | ---------------------------------------------------------------------------- |
 | 1  | **Hero**                 | P0        | Headline persona pendamping personal, sub-headline nilai tambah, CTA WhatsApp utama, dan form ringkas. |
-| 2  | **Keunggulan**           | P0        | 4 poin: gratis konsultasi, pilihan banyak bank mitra, didampingi sampai cair, jaminan data aman. |
-| 3  | **Bank Mitra & Produk**  | P0        | Informasi indikatif kisaran plafon, bunga, dan tenor dari tabel `bank_products`. Otomatis tersembunyi jika tidak ada bank aktif. |
-| 4  | **Cara Pengajuan**       | P0        | 3 langkah: Chat WhatsApp → Dicarikan produk pas → Didampingi sampai cair.     |
+| 2  | **Keunggulan**           | P0        | 4 poin: gratis konsultasi, ditemani dari awal sampai akhir, didampingi sampai cair, jaminan data aman. (Tanpa janji "banyak bank" — dihapus 2026-09-12.) |
+| 3  | **~~Bank Mitra & Produk~~ (DIHAPUS permanen 2026-09-12)** | — | Dihapus total (kode + admin + tabel DB) untuk menghindari penolakan Meta (impersonation + klaim finansial). Jangan dibangun ulang tanpa review legal. |
+| 4  | **Cara Pengajuan**       | P0        | 3 langkah: Chat WhatsApp → Dicek bareng kebutuhannya → Didampingi sampai cair. |
 | 5  | **Testimonial**          | P0        | Slider manual (tanpa autoplay) testimonial asli nasabah. Otomatis tersembunyi jika data kosong. |
 | 6  | **Form Lead Ringkas**    | P0        | 4 field + consent (lihat §3.3).                                              |
 | 7  | **FAQ**                  | P1        | Accordion 5–8 pertanyaan umum seputar batas usia dan syarat dokumen.          |
 | 8  | **Footer & Compliance**  | P0        | Profil agen independen, disclaimer legal, kontak, jam operasional WA.         |
 
-> Landing page TIDAK menyebutkan satu nama bank sebagai identitas utama dan tidak menampilkan kesan aplikasi perbankan. Identitas halaman adalah agen pemasaran independen; nama bank hanya muncul sebagai informasi produk di section Bank Mitra.
+> Landing page TIDAK menyebutkan nama bank, logo bank, plafon, bunga, atau tenor spesifik dalam bentuk apa pun, dan tidak menampilkan kesan aplikasi perbankan. Identitas halaman adalah agen pendamping independen.
 
 ### 3.2 CTA Strategy (WhatsApp Utama)
 
@@ -135,11 +135,11 @@ Prinsip penulisan:
 | Hindari (korporat / AI slop)                           | Gunakan (pendamping personal)                                                     |
 | ------------------------------------------------------ | --------------------------------------------------------------------------------- |
 | "Solusi finansial inovatif untuk masa emas Anda!"       | "Sudah pensiun tapi masih butuh dana tambahan? Chat saja, saya bantu urus."        |
-| "Dapatkan penawaran eksklusif #1 dari bank terpercaya!" | "Saya carikan produk dari beberapa bank mitra, nanti dipilihkan yang paling pas."  |
+| "Dapatkan penawaran eksklusif #1 dari bank terpercaya!" | "Cukup chat WhatsApp. Saya bantu cek kebutuhan dan berkasnya sampai jelas." |
 | "Proses cepat mudah tanpa ribet!!"                      | "Cukup chat WhatsApp. Sisanya kami yang urus sampai dana cair."                    |
 
 - **Contoh Headline Hero:** *"Sudah Pensiun, Masih Butuh Dana Tambahan? Saya Bantu Urus Sampai Cair."*
-- **Contoh Sub-headline:** *"Gratis konsultasi. Saya bantu carikan produk dari beberapa bank mitra yang paling pas dengan gaji pensiun Bapak/Ibu."*
+- **Contoh Sub-headline:** *"Gratis konsultasi. Ceritakan saja kebutuhannya, saya bantu urus pengajuannya sampai jelas."*
 
 ---
 
@@ -285,27 +285,29 @@ CREATE TABLE wa_clicks (
 );
 CREATE INDEX idx_wa_clicks_created_at ON wa_clicks (created_at DESC);
 
--- Bank Products (dynamic listing; sumber section Bank Mitra & rekomendasi follow-up)
-CREATE TABLE bank_products (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  bank_name TEXT NOT NULL,
-  product_name TEXT,
-  plafon_min BIGINT,
-  plafon_max BIGINT,
-  bunga_indikatif NUMERIC(5,2),
-  tenor_min INTEGER,
-  tenor_max INTEGER,
-  notes TEXT,
-  logo_url TEXT,
-  display_order INTEGER NOT NULL DEFAULT 0,
-  is_active BOOLEAN NOT NULL DEFAULT true,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  deleted_at TIMESTAMPTZ                        -- soft delete
-);
-CREATE INDEX idx_bank_products_active ON bank_products (is_active, display_order) WHERE deleted_at IS NULL;
-CREATE TRIGGER trg_bank_products_updated BEFORE UPDATE ON bank_products
-  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+-- Bank Products — DIHAPUS PERMANEN 2026-09-12 (anti-tolak Meta).
+-- Tabel di-drop via migrations/20260912120000_drop-bank-products.sql.
+-- Jangan bangun ulang tanpa review legal Meta. Blok SQL lama disisakan
+-- sebagai arsip dan TIDAK boleh dijalankan ulang:
+-- (arsip) CREATE TABLE bank_products ( ... )
+-- (arsip)   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+-- (arsip)   bank_name TEXT NOT NULL,
+-- (arsip)   product_name TEXT,
+-- (arsip)   plafon_min BIGINT,
+-- (arsip)   plafon_max BIGINT,
+-- (arsip)   bunga_indikatif NUMERIC(5,2),
+-- (arsip)   tenor_min INTEGER,
+-- (arsip)   tenor_max INTEGER,
+-- (arsip)   notes TEXT,
+-- (arsip)   logo_url TEXT,
+-- (arsip)   display_order INTEGER NOT NULL DEFAULT 0,
+-- (arsip)   is_active BOOLEAN NOT NULL DEFAULT true,
+-- (arsip)   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+-- (arsip)   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+-- (arsip)   deleted_at TIMESTAMPTZ
+-- (arsip) );
+-- (arsip) CREATE INDEX idx_bank_products_active ...;
+-- (arsip) CREATE TRIGGER trg_bank_products_updated ...;
 
 -- Testimonials (section otomatis tersembunyi jika tidak ada baris aktif)
 CREATE TABLE testimonials (
@@ -339,8 +341,9 @@ CREATE TABLE faq (
 | --- | --- | --- |
 | `leads` | INSERT saja, dengan `WITH CHECK (consent = true)` | SELECT/UPDATE/DELETE penuh |
 | `wa_clicks` | INSERT saja | SELECT penuh |
-| `bank_products`, `testimonials`, `faq` | SELECT hanya baris `is_active = true AND deleted_at IS NULL` | CRUD penuh |
+| `testimonials`, `faq` | SELECT hanya baris `is_active = true AND deleted_at IS NULL` | CRUD penuh |
 | `app_settings` | SELECT saja | SELECT/UPDATE penuh |
+| `bank_products` | **DIHAPUS permanen 2026-09-12 — tidak ada policy** | — |
 
 **Aturan data:**
 
@@ -373,10 +376,9 @@ CREATE TABLE faq (
 - Ekspor data ke `.xlsx` (hanya baris aktif).
 - Soft delete dengan konfirmasi.
 
-### 6.4 Manajemen Bank Mitra (`bank_products`)
+### 6.4 ~~Manajemen Bank Mitra (`bank_products`)~~ — DIHAPUS permanen 2026-09-12
 
-- Tambah/edit/hapus (soft delete) bank mitra beserta plafon, bunga indikatif, tenor.
-- Sakelar active/inactive — jika tidak ada bank aktif, section Bank Mitra di landing page otomatis tersembunyi.
+Menu, API, dan tabel bank dihapus total (anti-tolak Meta). `/admin/bank-products` redirect ke `/admin`. Jangan bangun ulang tanpa review legal.
 
 ### 6.5 Dashboard Analytic
 
@@ -391,13 +393,13 @@ CREATE TABLE faq (
 
 ### 7.1 Agen Pemasaran Independen
 
-- **Sifat Identitas:** Halaman TIDAK boleh mencantumkan logo bank atau berpura-pura sebagai situs/aplikasi resmi perbankan.
+- **Sifat Identitas:** Halaman TIDAK boleh mencantumkan nama/logo bank, plafon, bunga, atau tenor spesifik, atau berpura-pura sebagai situs/aplikasi resmi perbankan.
 - **Disclaimer wajib di footer:**
-  > "Website ini dikelola oleh agen pemasaran independen dan bukan merupakan aplikasi resmi perbankan. Persetujuan pinjaman, penetapan bunga, dan pencairan dana sepenuhnya merupakan wewenang dari lembaga keuangan / bank mitra yang bersangkutan."
-- **Penyebutan OJK (teks netral):**
-  > "Seluruh produk kredit pensiun ditawarkan oleh bank mitra yang terdaftar dan diawasi oleh Otoritas Jasa Keuangan (OJK)."
+  > "Website ini dikelola oleh agen pemasaran independen dan bukan merupakan aplikasi resmi perbankan. Persetujuan pinjaman, penetapan bunga, dan pencairan dana sepenuhnya merupakan wewenang dari lembaga keuangan terkait."
+- **Penyebutan OJK (teks umum, tanpa klaim kemitraan):**
+  > "Layanan ini pendampingan umum, bukan bank. Jika nanti ada rujukan ke lembaga keuangan, pastikan lembaga tersebut terdaftar dan diawasi OJK."
   Dilarang memasang logo OJK seolah agen terafiliasi institusional.
-- **Label Bunga:** Seluruh informasi bunga & simulasi wajib mencantumkan kata **"Indikatif"** dan **"Syarat & Ketentuan Berlaku"**.
+- **Label Bunga:** Tidak ada angka bunga ditampilkan (katalog dihapus). Jika suatu saat ada angka, wajib kata **"Indikatif"** dan **"Syarat & Ketentuan Berlaku"**.
 
 ### 7.2 Kepatuhan UU PDP (UU No. 27/2022)
 
@@ -406,7 +408,7 @@ Halaman mengumpulkan data pribadi (nama, nomor WhatsApp, IP, user-agent, cookie 
 1. **Consent checkbox wajib** di form sebelum submit, dengan teks eksplisit: *"Saya setuju data saya (nama, nomor WhatsApp) diproses untuk dihubungi terkait informasi produk kredit pensiun."* + link `/privacy-policy`. Waktu consent dicatat (`consent_at`).
 2. **Halaman `/privacy-policy`** (static, bahasa sederhana senior-friendly): data yang dikumpulkan, tujuan pemrosesan, dasar persetujuan, penggunaan cookie/pixel Meta, hak subjek (akses/perbaikan/penghapusan — hubungi via WA), masa retensi.
 3. **Halaman `/terms`** (static): sifat jasa agen perantara, disclaimer, ketentuan penggunaan.
-4. Data dipakai **hanya** untuk keperluan kontak penawaran; tidak dijual/dibagikan ke pihak ketiga di luar proses referal ke bank mitra.
+4. Data dipakai **hanya** untuk keperluan kontak pendampingan; tidak dijual/dibagikan ke pihak ketiga. Penerusan ke lembaga keuangan hanya atas persetujuan calon nasabah bila pengajuan dilanjutkan.
 
 ---
 
@@ -424,7 +426,7 @@ Halaman mengumpulkan data pribadi (nama, nomor WhatsApp, IP, user-agent, cookie 
 
 **Mitigasi CLS ≤ 0.05 (wajib, karena konten dinamis):**
 
-- Section dinamis (Bank Mitra, Testimonial, FAQ) di-fetch **server-side** (React Server Components), bukan client-side water-fall.
+- Section dinamis (Testimonial, FAQ) di-fetch **server-side** (React Server Components), bukan client-side water-fall.
 - Skeleton dengan fixed-height untuk konten asinkron; heading font di-preload dengan `font-display: swap`.
 - Slider testimonial & accordion FAQ punya dimensi tetap.
 
@@ -444,8 +446,7 @@ Halaman mengumpulkan data pribadi (nama, nomor WhatsApp, IP, user-agent, cookie 
 ### 9.1 Prerequisites (sebelum development launch)
 
 - [ ] Akun Meta Business Manager dibuat; Pixel/dataset + CAPI token tersimpan di environment variables.
-- [ ] Seed data bank mitra & produk (Open Question #1) siap diinput admin.
-- [ ] Copy final: hero, keunggulan, FAQ, cara pengajuan.
+- [ ] Copy final: hero, keunggulan, FAQ, cara pengajuan (tanpa sebut bank/angka).
 - [ ] Halaman `/privacy-policy` & `/terms` live.
 - [ ] Penanggung jawab balasan WA 08.00–21.00 WIB ditetapkan (Open Question #2).
 - [ ] Fase trial: subdomain InsForge aktif. Sebelum scale: custom domain dibeli + diverifikasi di Meta Business (Open Question #3).
@@ -457,10 +458,10 @@ Halaman mengumpulkan data pribadi (nama, nomor WhatsApp, IP, user-agent, cookie 
 - [ ] Form: validasi, honeypot, rate limit, consent tersimpan (`consent`, `consent_at`), phone tersimpan E.164.
 - [ ] Redirect `/api/contact-wa` membuka chat WA dengan nomor (E.164) dan pre-filled message benar.
 - [ ] Anti double-submit berfungsi (nomor sama < 24 jam).
-- [ ] Admin: login, CRUD lead/bank/testimonial/FAQ, ganti nomor WA tanpa deploy ulang, export .xlsx.
-- [ ] Section otomatis tersembunyi: Bank Mitra (0 aktif), Testimonial (kosong).
+- [ ] Admin: login, CRUD lead/testimonial/FAQ, ganti nomor WA tanpa deploy ulang, export .xlsx.
+- [ ] Section otomatis tersembunyi: Testimonial (kosong).
 - [ ] Lighthouse mobile ≥ 90 (Performance, Best Practices, SEO); CLS ≤ 0.05; LCP ≤ 2.0 s.
-- [ ] Compliance sign-off: disclaimer footer, teks OJK netral, label "Indikatif" + S&K, tanpa identitas bank, tanpa kreatif atribut personal.
+- [ ] Compliance sign-off: disclaimer footer umum, teks OJK umum tanpa klaim kemitraan, tanpa nama/logo/angka bank, tanpa kreatif atribut personal.
 - [ ] Tidak ada error di console browser.
 
 ---
@@ -493,10 +494,10 @@ Halaman mengumpulkan data pribadi (nama, nomor WhatsApp, IP, user-agent, cookie 
 | No | Pertanyaan                                                 | Status     | Jawaban                              |
 | -- | ---------------------------------------------------------- | ---------- | ------------------------------------ |
 | 1  | No. WhatsApp koordinator untuk CTA WhatsApp?               | Answered   | 6282189902246 — bisa diganti via admin (E.164) |
-| 2  | Penyebutan OJK di landing page?                            | Answered   | Teks netral: bank mitra terdaftar & diawasi OJK |
+| 2  | Penyebutan OJK di landing page?                            | Answered (revisi 2026-09-12) | Teks umum: layanan pendampingan, pastikan lembaga terdaftar & diawasi OJK |
 | 3  | Contoh testimonial nasabah yang akan ditampilkan?          | Answered   | Section dibuat, dikosongkan dulu     |
 | 4  | Domain khusus untuk landing page?                          | Answered   | Trial: subdomain InsForge; custom domain sebelum scale |
-| 5  | Daftar awal bank mitra & produk untuk seed data admin?     | **Open**   | Menunggu data dari koordinator (blocking launch, tidak blocking dev) |
+| 5  | Daftar awal bank mitra & produk untuk seed data admin?     | **Closed (Wont-do)**   | Dihapus permanen 2026-09-12 (anti-tolak Meta); tidak perlu seed |
 | 6  | Siapa penanggung jawab balasan WA jam 08.00–21.00 WIB?     | **Open**   | Prasyarat SLA WA                     |
 | 7  | Nama custom domain yang akan dibeli?                       | **Open**   | Rekomendasi `.com`/`.id` singkat & mudah diingat |
 | 8  | Akun Meta Business Manager & Pixel sudah tersedia?         | **Open**   | Prasyarat minggu 1                   |
@@ -543,6 +544,7 @@ Halaman mengumpulkan data pribadi (nama, nomor WhatsApp, IP, user-agent, cookie 
 | 2026-09-10 | Validasi server-side Zod penuh (edge npm:zod mirror + safeParse semua server actions) | Best practice Next.js; single source di lib/schema.ts |
 | 2026-09-10 | Allowlist 1 email admin DITUNDA (tetap cek userId) | Menunggu alamat email pasti dari koordinator |
 | 2026-09-10 | Seed 6 FAQ generik non-produk (tanpa angka bunga/plafon) | Section FAQ tampil; angka produk tetap tunggu koordinator |
+| 2026-09-12 | Hapus permanen Bank Mitra (kode + admin + tabel DB + PRD v3); copy fokus pendampingan gratis; OJK jadi kalimat umum | Hindari penolakan Meta (impersonation + klaim finansial); pilihan koordinator: hapus permanen |
 
 ---
 

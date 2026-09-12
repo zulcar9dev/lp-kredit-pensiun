@@ -128,25 +128,6 @@ export const faqServerSchema = z.object({
   is_active: z.boolean().default(true),
 });
 
-export const bankProductServerSchema = z.object({
-  bank_name: z
-    .string()
-    .trim()
-    .min(2, "Nama bank minimal 2 karakter.")
-    .max(100),
-  product_name: z.string().trim().max(150).nullish(),
-  plafon_min: z.number().int().min(0).nullish(),
-  plafon_max: z.number().int().min(0).nullish(),
-  bunga_indikatif: z.number().min(0).max(100).nullish(),
-  tenor_min: z.number().int().min(1).max(360).nullish(),
-  tenor_max: z.number().int().min(1).max(360).nullish(),
-  notes: z.string().trim().max(2000).nullish(),
-  logo_url: z.string().trim().max(500).nullish(),
-  logo_key: z.string().trim().max(500).nullish(),
-  display_order: z.number().int().default(0),
-  is_active: z.boolean().default(true),
-});
-
 export interface LeadPayload extends LeadData {
   event_id?: string;
   fbp?: string | null;
